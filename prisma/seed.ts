@@ -1,20 +1,27 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 
-const provider = process.env.DATABASE_PROVIDER || "sqlite";
-const url = process.env.DATABASE_URL || "file:./dev.db";
+console.log("database url:", process.env.DATABASE_URL);
 
-let prisma: PrismaClient;
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
 
-if (provider === "sqlite") {
-  const adapter = new PrismaBetterSqlite3({ url });
-  prisma = new PrismaClient({ adapter });
-} else {
-  // PostgreSQL or other providers don't need an adapter
-  prisma = new PrismaClient();
-}
+const prisma = new PrismaClient({
+  adapter,
+});
 
 async function main() {
+  if (!(await prisma.store.findFirst())) {
+    // Create default store
+    await prisma.store.create({
+      data: {
+        name: "Main Store",
+      },
+    });
+    console.log("Created default store");
+  }
   // Create default customer types if they don't exist
   const customerTypes = ["member", "customer"];
 

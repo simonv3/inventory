@@ -54,6 +54,7 @@ model Customer {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   markupPercent  Float     @default(5.0)
+  isAdmin        Boolean   @default(false)
 
   customerType CustomerType?   @relation(fields: [customerTypeId], references: [id], onDelete: SetNull)
   stores       CustomerStore[]

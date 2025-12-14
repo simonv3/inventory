@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
@@ -25,6 +25,20 @@ export async function POST(request: NextRequest) {
     const customer = await prisma.customer.findUnique({
       where: { email },
     });
+
+    if (!customer) {
+      const aCustomer = await prisma.customer.findFirst();
+      if (!aCustomer) {
+        // Create a default customer if none exist
+        await prisma.customer.create({
+          data: {
+            name: "Admin",
+            email,
+            isAdmin: true,
+          },
+        });
+      }
+    }
 
     // If customer doesn't exist, create one
     if (!customer) {

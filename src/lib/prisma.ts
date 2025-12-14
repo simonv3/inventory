@@ -1,27 +1,22 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient;
+};
 
-let client: PrismaClient;
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
 
-if (!globalForPrisma.prisma) {
-  const provider = process.env.DATABASE_PROVIDER || "sqlite";
-  const url = process.env.DATABASE_URL || "file:./dev.db";
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    adapter,
+  });
 
-  if (provider === "sqlite") {
-    const adapter = new PrismaBetterSqlite3({ url });
-    client = new PrismaClient({ adapter });
-  } else {
-    // PostgreSQL or other providers don't need an adapter
-    client = new PrismaClient();
-  }
-} else {
-  client = globalForPrisma.prisma;
-}
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-export const prisma = client;
+export { prisma };
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = client;
-}
+export default prisma;
