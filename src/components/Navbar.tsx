@@ -1,0 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+
+interface NavbarProps {
+  customerName?: string;
+  onLogout?: () => void;
+}
+
+export function Navbar({ customerName, onLogout }: NavbarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isPortal = pathname.startsWith("/customer/portal");
+
+  const navItems = [
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard/products", label: "Products" },
+    { href: "/dashboard/inventory", label: "Inventory" },
+    { href: "/dashboard/sales", label: "Sales" },
+    { href: "/dashboard/customers", label: "Customers" },
+    { href: "/dashboard/import", label: "Import" },
+    { href: "/customer/portal", label: "My Orders" },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+    if (onLogout) {
+      onLogout();
+    }
+    router.push("/");
+  };
+
+  return (
+    <nav className="bg-slate-800 text-white shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Link
+            href={isPortal ? "/customer/portal" : "/dashboard"}
+            className="text-2xl font-bold"
+          >
+            📦 Inventory
+          </Link>
+          <div className="flex gap-8 items-center">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`transition ${
+                  pathname === item.href
+                    ? "text-blue-400"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/shopping-cart"
+              className={`transition ${
+                pathname === "/shopping-cart"
+                  ? "text-blue-400"
+                  : "text-gray-300 hover:text-white"
+              }`}
+            >
+              🛒 Cart
+            </Link>
+            <div className="flex items-center gap-4 ml-4 pl-4">
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}

@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Customer Type table
+model CustomerType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers Customer[]
+}
+
+// Store table
+model Store {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers CustomerStore[]
+  products  Product[]
+}
+
+// Junction table for Customer and Store (many-to-many)
+model CustomerStore {
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  storeId    Int
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, storeId])
+}
+
+// Customers table
+model Customer {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  otpCode        String?
+  otpExpiresAt   DateTime?
+  customerTypeId Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  markupPercent  Float     @default(5.0)
+
+  customerType CustomerType?   @relation(fields: [customerTypeId], references: [id], onDelete: SetNull)
+  stores       CustomerStore[]
+  sales        Sale[]
+}
+
+// Category table
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products ProductCategory[]
+}
+
+// Source table
+model Source {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+// Products table
+model Product {
+  id                Int      @id @default(autoincrement())
+  name              String
+  isOrganic         Boolean  @default(false)
+  showInStorefront  Boolean  @default(true)
+  unitOfMeasurement String // e.g., "kg", "lbs", "units"
+  pricePerUnit      Float // Cost price
+  minimumStock      Int
+  sourceId          Int? // Foreign key to Source table (optional)
+  storeId           Int // Foreign key to Store table (required - each product belongs to one store)
+  sku               String // Stock Keeping Unit - unique per store
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  source            Source?             @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  store             Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  categories        ProductCategory[]
+  inventoryReceived InventoryReceived[]
+  saleItems         SaleItem[]
+
+  @@unique([storeId, sku])
+}
+
+// Junction table for Product and Category (many-to-many)
+model ProductCategory {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  categoryId Int
+  createdAt  DateTime @default(now())
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+}
+
+// Inventory Received table
+model InventoryReceived {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  quantity     Int
+  receivedDate DateTime
+  receiptUrl   String? // URL to uploaded receipt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// Sales table
+model Sale {
+  id            Int      @id @default(autoincrement())
+  customerId    Int
+  saleDate      DateTime @default(now())
+  totalCost     Float // Total cost to procure
+  totalPrice    Float // Total price charged to customer
+  markupPercent Float // Markup percentage applied
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    SaleItem[]
+}
+
+// Sale Items table (line items in a sale)
+model SaleItem {
+  id        Int      @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  costPrice Float // Cost per unit at time of sale
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
