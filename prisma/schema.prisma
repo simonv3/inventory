@@ -153,6 +153,7 @@ model SaleItem {
   productId Int
   quantity  Int
   costPrice Float // Cost per unit at time of sale
+  salePrice Float // Sale price per unit
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

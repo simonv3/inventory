@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { StoreSelector } from "./StoreSelector";
 
 interface NavbarProps {
   customerName?: string;
@@ -12,16 +13,21 @@ export function Navbar({ customerName, onLogout }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isPortal = pathname.startsWith("/customer/portal");
+  const isDashboard = pathname.startsWith("/dashboard");
 
-  const navItems = [
+  const dashboardItems = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/dashboard/products", label: "Products" },
     { href: "/dashboard/inventory", label: "Inventory" },
     { href: "/dashboard/sales", label: "Sales" },
     { href: "/dashboard/customers", label: "Customers" },
     { href: "/dashboard/import", label: "Import" },
-    { href: "/customer/portal", label: "My Orders" },
   ];
+
+  const portalItems = [{ href: "/customer/portal", label: "My Orders" }];
+
+  const navItems = isPortal ? portalItems : dashboardItems;
+  const portalLink = { href: "/customer/portal", label: "Portal" };
 
   const handleLogout = async () => {
     try {
@@ -55,24 +61,40 @@ export function Navbar({ customerName, onLogout }: NavbarProps) {
                 href={item.href}
                 className={`transition ${
                   pathname === item.href
-                    ? "text-blue-400"
+                    ? "text-blue-400 font-semibold"
                     : "text-gray-300 hover:text-white"
                 }`}
               >
                 {item.label}
               </Link>
             ))}
+            {!isPortal && (
+              <Link
+                href={portalLink.href}
+                className={`transition ${
+                  pathname === portalLink.href
+                    ? "text-blue-400 font-semibold"
+                    : "text-gray-300 hover:text-white"
+                }`}
+              >
+                {portalLink.label}
+              </Link>
+            )}
             <Link
               href="/shopping-cart"
               className={`transition ${
                 pathname === "/shopping-cart"
-                  ? "text-blue-400"
+                  ? "text-blue-400 font-semibold"
                   : "text-gray-300 hover:text-white"
               }`}
             >
               🛒 Cart
             </Link>
-            <div className="flex items-center gap-4 ml-4 pl-4">
+            {isDashboard && <StoreSelector />}
+            <div className="flex items-center gap-4 ml-8 pl-8 border-l border-gray-600">
+              {customerName && (
+                <span className="text-sm text-gray-300">{customerName}</span>
+              )}
               <button
                 onClick={handleLogout}
                 className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"

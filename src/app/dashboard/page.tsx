@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Product, Customer, InventoryReceived, Sale } from "@/types";
 import { useApiWithToast } from "@/lib/useApiWithToast";
+import { useStore } from "@/context/StoreContext";
 
 export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -12,16 +13,33 @@ export default function Dashboard() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const { fetchData } = useApiWithToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Create a wrapper to add store header to fetchData
+        const fetchWithStore = async <T,>(url: string): Promise<T | null> => {
+          const headers: Record<string, string> = {};
+          if (currentStoreId) {
+            headers["x-store-id"] = currentStoreId.toString();
+          }
+          const response = await fetch(url, {
+            credentials: "include",
+            headers,
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}`);
+          }
+          return response.json();
+        };
+
         const [productsData, customersData, inventoryData, salesData] =
           await Promise.all([
-            fetchData<Product[]>("/api/products"),
-            fetchData<Customer[]>("/api/customers"),
-            fetchData<InventoryReceived[]>("/api/inventory"),
-            fetchData<Sale[]>("/api/sales"),
+            fetchWithStore<Product[]>("/api/products"),
+            fetchWithStore<Customer[]>("/api/customers"),
+            fetchWithStore<InventoryReceived[]>("/api/inventory"),
+            fetchWithStore<Sale[]>("/api/sales"),
           ]);
 
         if (productsData) setProducts(productsData);
@@ -33,8 +51,10 @@ export default function Dashboard() {
       }
     };
 
-    loadData();
-  }, []);
+    if (currentStoreId || currentStoreId === null) {
+      loadData();
+    }
+  }, [currentStoreId]);
 
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalPrice, 0);
   const averagePurchase = sales.length > 0 ? totalRevenue / sales.length : 0;

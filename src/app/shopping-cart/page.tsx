@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Navbar, Button } from "@/components";
+import { CustomerAutocomplete } from "@/components/CustomerAutocomplete";
 import { Customer, Product } from "@/types";
 import QRCode from "qrcode";
 import { SaleFormInputs } from "@/app/dashboard/sales/page";
@@ -183,24 +184,14 @@ export default function ShoppingCartPage() {
                   <label className="block text-sm font-medium mb-1">
                     Customer
                   </label>
-                  <select
-                    {...register("customerId", {
-                      required: "Customer is required",
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded"
-                  >
-                    <option value="">Select Customer</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.customerId && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.customerId.message}
-                    </p>
-                  )}
+                  <CustomerAutocomplete
+                    customers={customers}
+                    value={selectedCustomerId}
+                    onChange={(customerId) =>
+                      setValue("customerId", customerId)
+                    }
+                    error={errors.customerId?.message}
+                  />
                 </div>
 
                 <div>

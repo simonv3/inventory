@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getStoreIdFromRequest } from "@/lib/storeUtils";
 
 // GET all products with categories and sources
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const storeId = getStoreIdFromRequest(request);
+
     const products = await prisma.product.findMany({
+      where: storeId ? { storeId } : {},
       include: {
         categories: {
           include: {

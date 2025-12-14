@@ -258,6 +258,7 @@ async function importSaleOrder(
       productId: number;
       quantity: number;
       costPrice: number;
+      salePrice: number;
     }[] = [];
 
     let errors = [];
@@ -305,7 +306,12 @@ async function importSaleOrder(
       saleItems.push({
         productId: product.id,
         quantity: Math.floor(quantity),
-        costPrice: totalSaleItemPrice,
+        costPrice:
+          quantity > 0 ? totalSaleItemPrice / quantity : totalSaleItemPrice,
+        salePrice:
+          quantity > 0
+            ? (totalSaleItemPrice / quantity) * 1.05
+            : totalSaleItemPrice * 1.05,
       });
     }
 
