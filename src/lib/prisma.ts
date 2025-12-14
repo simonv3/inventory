@@ -6,9 +6,16 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 let client: PrismaClient;
 
 if (!globalForPrisma.prisma) {
+  const provider = process.env.DATABASE_PROVIDER || "sqlite";
   const url = process.env.DATABASE_URL || "file:./dev.db";
-  const adapter = new PrismaBetterSqlite3({ url });
-  client = new PrismaClient({ adapter });
+
+  if (provider === "sqlite") {
+    const adapter = new PrismaBetterSqlite3({ url });
+    client = new PrismaClient({ adapter });
+  } else {
+    // PostgreSQL or other providers don't need an adapter
+    client = new PrismaClient();
+  }
 } else {
   client = globalForPrisma.prisma;
 }

@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log("process", process.env.SENDGRID_API_KEY);
+
     // Send OTP via SendGrid if API key is configured
     if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
       try {

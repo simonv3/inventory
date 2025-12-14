@@ -1,9 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
+const provider = process.env.DATABASE_PROVIDER || "sqlite";
 const url = process.env.DATABASE_URL || "file:./dev.db";
-const adapter = new PrismaBetterSqlite3({ url });
-const prisma = new PrismaClient({ adapter });
+
+let prisma: PrismaClient;
+
+if (provider === "sqlite") {
+  const adapter = new PrismaBetterSqlite3({ url });
+  prisma = new PrismaClient({ adapter });
+} else {
+  // PostgreSQL or other providers don't need an adapter
+  prisma = new PrismaClient();
+}
 
 async function main() {
   // Create default customer types if they don't exist
@@ -22,20 +31,6 @@ async function main() {
     } else {
       console.log(`Customer type already exists: ${typeName}`);
     }
-  }
-
-  // Create default store if it doesn't exist
-  const existingStore = await prisma.store.findUnique({
-    where: { name: "Main Store" },
-  });
-
-  if (!existingStore) {
-    await prisma.store.create({
-      data: { name: "Main Store" },
-    });
-    console.log("Created default store: Main Store");
-  } else {
-    console.log("Default store already exists: Main Store");
   }
 
   // Create default sources if they don't exist
