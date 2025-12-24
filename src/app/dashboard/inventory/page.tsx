@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar, Button, Dialog, Input, Select } from "@/components";
+import { Button, Dialog, Input, Select } from "@/components";
 import { InventoryReceived, Product } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
@@ -216,282 +216,278 @@ export default function InventoryPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Inventory Received</h1>
-          <Button onClick={() => handleOpenDialog()}>+ New Entry</Button>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Inventory Received</h1>
+        <Button onClick={() => handleOpenDialog()}>+ New Entry</Button>
+      </div>
+
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search by product name or date..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {selectedRows.size > 0 && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded flex justify-between items-center">
+          <p className="text-blue-900 font-medium">
+            {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""} selected
+          </p>
+          <button
+            onClick={handleBulkDeleteClick}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+          >
+            Delete Selected
+          </button>
         </div>
+      )}
 
-        <div className="mb-6">
-          <Input
-            type="text"
-            placeholder="Search by product name or date..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {selectedRows.size > 0 && (
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded flex justify-between items-center">
-            <p className="text-blue-900 font-medium">
-              {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""}{" "}
-              selected
-            </p>
-            <button
-              onClick={handleBulkDeleteClick}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
-            >
-              Delete Selected
-            </button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 px-4 py-2 text-left w-12">
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 cursor-pointer"
+                />
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("productId")}
+              >
+                Product{getSortIndicator("productId")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("quantity")}
+              >
+                Quantity{getSortIndicator("quantity")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("receivedDate")}
+              >
+                Received Date{getSortIndicator("receivedDate")}
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Receipt
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedInventory.length === 0 ? (
               <tr>
-                <th className="border border-gray-300 px-4 py-2 text-left w-12">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("productId")}
+                <td
+                  colSpan={6}
+                  className="border border-gray-300 px-4 py-2 text-center text-gray-500"
                 >
-                  Product{getSortIndicator("productId")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("quantity")}
-                >
-                  Quantity{getSortIndicator("quantity")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("receivedDate")}
-                >
-                  Received Date{getSortIndicator("receivedDate")}
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Receipt
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Actions
-                </th>
+                  {inventory.length === 0
+                    ? "No inventory entries available"
+                    : "No inventory entries match your search"}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sortedInventory.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="border border-gray-300 px-4 py-2 text-center text-gray-500"
+            ) : (
+              sortedInventory.map((item, idx) => {
+                const originalIdx = inventory.indexOf(item);
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-gray-50 ${
+                      selectedRows.has(originalIdx) ? "bg-blue-100" : ""
+                    }`}
                   >
-                    {inventory.length === 0
-                      ? "No inventory entries available"
-                      : "No inventory entries match your search"}
-                  </td>
-                </tr>
-              ) : (
-                sortedInventory.map((item, idx) => {
-                  const originalIdx = inventory.indexOf(item);
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-gray-50 ${
-                        selectedRows.has(originalIdx) ? "bg-blue-100" : ""
-                      }`}
-                    >
-                      <td className="border border-gray-300 px-4 py-2 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.has(originalIdx)}
-                          onChange={() => handleSelectRow(originalIdx)}
-                          className="w-4 h-4 cursor-pointer"
-                        />
-                      </td>
-                      {inlineEditingId === item.id && inlineEditData ? (
-                        <>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <select
-                              value={inlineEditData.productId || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  productId: parseInt(e.target.value),
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
+                    <td className="border border-gray-300 px-4 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(originalIdx)}
+                        onChange={() => handleSelectRow(originalIdx)}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                    </td>
+                    {inlineEditingId === item.id && inlineEditData ? (
+                      <>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <select
+                            value={inlineEditData.productId || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                productId: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          >
+                            <option value="">Select product</option>
+                            {products.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="number"
+                            value={inlineEditData.quantity || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                quantity: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="date"
+                            value={
+                              (inlineEditData.receivedDate as string)?.split(
+                                "T"
+                              )[0] || ""
+                            }
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                receivedDate: e.target.value,
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="url"
+                            value={inlineEditData.receiptUrl || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                receiptUrl: e.target.value,
+                              })
+                            }
+                            placeholder="URL..."
+                            className="w-full px-2 py-1 border rounded text-sm"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleInlineSave(item.id)}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
                             >
-                              <option value="">Select product</option>
-                              {products.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="number"
-                              value={inlineEditData.quantity || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  quantity: parseInt(e.target.value),
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="date"
-                              value={
-                                (inlineEditData.receivedDate as string)?.split(
-                                  "T"
-                                )[0] || ""
-                              }
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  receivedDate: e.target.value,
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="url"
-                              value={inlineEditData.receiptUrl || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  receiptUrl: e.target.value,
-                                })
-                              }
-                              placeholder="URL..."
-                              className="w-full px-2 py-1 border rounded text-sm"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => handleInlineSave(item.id)}
-                                className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
-                              >
-                                Save
-                              </button>
-                              <button
-                                onClick={handleInlineCancel}
-                                className="bg-gray-400 text-white px-2 py-1 rounded text-sm hover:bg-gray-500"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {products.find((p) => p.id === item.productId)
-                              ?.name || "Unknown"}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {item.quantity}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {new Date(item.receivedDate).toLocaleDateString()}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2 text-center">
-                            {item.receiptUrl ? "✓" : "✗"}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleInlineEdit(item)}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(item.id)}
-                                className="text-red-600 hover:text-red-800 font-medium"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                              Save
+                            </button>
+                            <button
+                              onClick={handleInlineCancel}
+                              className="bg-gray-400 text-white px-2 py-1 rounded text-sm hover:bg-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {products.find((p) => p.id === item.productId)
+                            ?.name || "Unknown"}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {item.quantity}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {new Date(item.receivedDate).toLocaleDateString()}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          {item.receiptUrl ? "✓" : "✗"}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleInlineEdit(item)}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          title={editingId ? "Edit Inventory Entry" : "New Inventory Entry"}
-        >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Select
-              label="Product"
-              value={formData.productId}
-              onChange={(e) =>
-                setFormData({ ...formData, productId: e.target.value })
-              }
-              options={products.map((p) => ({
-                value: p.id,
-                label: p.name,
-              }))}
-              required
-            />
-            <Input
-              label="Quantity"
-              type="number"
-              value={formData.quantity}
-              onChange={(e) =>
-                setFormData({ ...formData, quantity: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Received Date"
-              type="date"
-              value={formData.receivedDate}
-              onChange={(e) =>
-                setFormData({ ...formData, receivedDate: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Receipt URL (optional)"
-              type="url"
-              value={formData.receiptUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, receiptUrl: e.target.value })
-              }
-            />
-            <div className="flex gap-2">
-              <Button type="submit">Save</Button>
-              <Button variant="secondary" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Dialog>
-      </main>
-    </div>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={editingId ? "Edit Inventory Entry" : "New Inventory Entry"}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Select
+            label="Product"
+            value={formData.productId}
+            onChange={(e) =>
+              setFormData({ ...formData, productId: e.target.value })
+            }
+            options={products.map((p) => ({
+              value: p.id,
+              label: p.name,
+            }))}
+            required
+          />
+          <Input
+            label="Quantity"
+            type="number"
+            value={formData.quantity}
+            onChange={(e) =>
+              setFormData({ ...formData, quantity: e.target.value })
+            }
+            required
+          />
+          <Input
+            label="Received Date"
+            type="date"
+            value={formData.receivedDate}
+            onChange={(e) =>
+              setFormData({ ...formData, receivedDate: e.target.value })
+            }
+            required
+          />
+          <Input
+            label="Receipt URL (optional)"
+            type="url"
+            value={formData.receiptUrl}
+            onChange={(e) =>
+              setFormData({ ...formData, receiptUrl: e.target.value })
+            }
+          />
+          <div className="flex gap-2">
+            <Button type="submit">Save</Button>
+            <Button variant="secondary" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </main>
   );
 }

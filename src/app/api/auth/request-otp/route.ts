@@ -1,11 +1,17 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import sgMail from "@sendgrid/mail";
+import nodemailer from "nodemailer";
 
-// Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
+// Initialize nodemailer transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
 // Generate a random 6-digit OTP
 function generateOTP(): string {
@@ -22,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find customer by email
-    const customer = await prisma.customer.findUnique({
+    let customer = await prisma.customer.findUnique({
       where: { email },
     });
 
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
       const aCustomer = await prisma.customer.findFirst();
       if (!aCustomer) {
         // Create a default customer if none exist
-        await prisma.customer.create({
+        customer = await prisma.customer.create({
           data: {
             name: "Admin",
             email,
@@ -61,14 +67,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log("process", process.env.SENDGRID_API_KEY);
+    console.log("SMTP configured:", !!process.env.SMTP_HOST);
 
-    // Send OTP via SendGrid if API key is configured
-    if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
+    // Send OTP via nodemailer if SMTP is configured
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD && process.env.SMTP_FROM_EMAIL) {
       try {
-        await sgMail.send({
+        await transporter.sendMail({
           to: email,
-          from: process.env.SENDGRID_FROM_EMAIL,
+          from: process.env.SMTP_FROM_EMAIL,
           subject: "Your One-Time Login Code",
           html: `
             <div style="font-family: Arial, sans-serif; padding: 20px;">

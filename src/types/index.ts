@@ -24,6 +24,7 @@ export interface CustomerStore {
 
 export interface Customer {
   id: number;
+  isAdmin: boolean;
   name: string;
   email: string;
   customerTypeId?: number;

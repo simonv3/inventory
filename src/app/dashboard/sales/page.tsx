@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Navbar, Button, Dialog, Input } from "@/components";
+import { Button, Dialog, Input } from "@/components";
 import { Sale, Customer, Product } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { SaleTableRow } from "@/components/SaleTableRow";
@@ -11,7 +11,7 @@ import SaleDialog from "@/components/SaleDialog";
 export interface SaleFormInputs {
   customerId: string;
   markupPercent: string;
-  items: Array<{ productId: string; quantity: string }>;
+  items: Array<{ productId: string; quantity: string; quantityOz?: string }>;
 }
 
 export default function SalesPage() {
@@ -239,142 +239,138 @@ export default function SalesPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Sales</h1>
-          <Button onClick={() => handleOpenDialog()}>+ New Sale</Button>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Sales</h1>
+        <Button onClick={() => handleOpenDialog()}>+ New Sale</Button>
+      </div>
+
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search by customer name, email, or date..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {selectedRows.size > 0 && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <span className="text-blue-900">
+            {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""} selected
+          </span>
+          <button
+            onClick={handleBulkDeleteClick}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Delete Selected
+          </button>
         </div>
+      )}
 
-        <div className="mb-6">
-          <Input
-            type="text"
-            placeholder="Search by customer name, email, or date..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {selectedRows.size > 0 && (
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-            <span className="text-blue-900">
-              {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""}{" "}
-              selected
-            </span>
-            <button
-              onClick={handleBulkDeleteClick}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Delete Selected
-            </button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 px-3 py-2 text-left font-semibold w-10">
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  className="cursor-pointer"
+                />
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("customerId")}
+              >
+                Customer{getSortIndicator("customerId")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("date")}
+              >
+                Date{getSortIndicator("date")}
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Items
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("totalCost")}
+              >
+                Total Cost{getSortIndicator("totalCost")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("totalPrice")}
+              >
+                Total Price{getSortIndicator("totalPrice")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("markupPercent")}
+              >
+                Markup{getSortIndicator("markupPercent")}
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedSales.length === 0 ? (
               <tr>
-                <th className="border border-gray-300 px-3 py-2 text-left font-semibold w-10">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAll}
-                    className="cursor-pointer"
-                  />
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("customerId")}
+                <td
+                  colSpan={8}
+                  className="border border-gray-300 px-4 py-2 text-center text-gray-500"
                 >
-                  Customer{getSortIndicator("customerId")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("date")}
-                >
-                  Date{getSortIndicator("date")}
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Items
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("totalCost")}
-                >
-                  Total Cost{getSortIndicator("totalCost")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("totalPrice")}
-                >
-                  Total Price{getSortIndicator("totalPrice")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("markupPercent")}
-                >
-                  Markup{getSortIndicator("markupPercent")}
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Actions
-                </th>
+                  {sales.length === 0
+                    ? "No sales available"
+                    : "No sales match your search"}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sortedSales.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="border border-gray-300 px-4 py-2 text-center text-gray-500"
-                  >
-                    {sales.length === 0
-                      ? "No sales available"
-                      : "No sales match your search"}
-                  </td>
-                </tr>
-              ) : (
-                sortedSales.map((sale, saleIdx) => {
-                  const originalIdx = sales.indexOf(sale);
-                  return (
-                    <SaleTableRow
-                      key={sale.id}
-                      sale={sale}
-                      saleIdx={originalIdx}
-                      isSelected={selectedRows.has(originalIdx)}
-                      customers={customers}
-                      products={products}
-                      onSelectRow={handleSelectRow}
-                      onOpenDialog={handleOpenDialog}
-                      onDelete={handleDelete}
-                    />
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+            ) : (
+              sortedSales.map((sale, saleIdx) => {
+                const originalIdx = sales.indexOf(sale);
+                return (
+                  <SaleTableRow
+                    key={sale.id}
+                    sale={sale}
+                    saleIdx={originalIdx}
+                    isSelected={selectedRows.has(originalIdx)}
+                    customers={customers}
+                    products={products}
+                    onSelectRow={handleSelectRow}
+                    onOpenDialog={handleOpenDialog}
+                    onDelete={handleDelete}
+                  />
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          title={editingId ? "Edit Sale" : "New Sale"}
-        >
-          <SaleDialog
-            customers={customers}
-            products={products}
-            register={register}
-            handleSubmit={handleSubmit}
-            onSubmit={onSubmit}
-            watch={watch}
-            errors={errors}
-            fields={fields}
-            append={append}
-            remove={remove}
-            onClose={() => setDialogOpen(false)}
-          />
-        </Dialog>
-      </main>
-    </div>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={editingId ? "Edit Sale" : "New Sale"}
+      >
+        <SaleDialog
+          customers={customers}
+          products={products}
+          register={register}
+          handleSubmit={handleSubmit}
+          onSubmit={onSubmit}
+          watch={watch}
+          errors={errors}
+          fields={fields}
+          append={append}
+          remove={remove}
+          onClose={() => setDialogOpen(false)}
+        />
+      </Dialog>
+    </main>
   );
 }

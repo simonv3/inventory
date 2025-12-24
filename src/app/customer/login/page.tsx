@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CustomerLogin() {
+  const { refreshToken } = useAuth();
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,8 +59,8 @@ export default function CustomerLogin() {
         return;
       }
 
-      // No need to store token or customer data - cookie is set automatically
-      // Just redirect to customer portal
+      await refreshToken();
+
       router.push("/customer/portal");
     } catch (err) {
       setError("An error occurred. Please try again.");

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Navbar, Button, Dialog, Input, Select } from "@/components";
+import { Button, Dialog, Input, Select } from "@/components";
 import { Product, Category, Source } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
@@ -326,142 +326,138 @@ export default function ProductsPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div>
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Products</h1>
-          <Button onClick={() => handleOpenDialog()}>+ New Product</Button>
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Products</h1>
+        <Button onClick={() => handleOpenDialog()}>+ New Product</Button>
+      </div>
+
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search by product name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {selectedRows.size > 0 && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <span className="text-blue-900">
+            {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""} selected
+          </span>
+          <button
+            onClick={handleBulkDeleteClick}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Delete Selected
+          </button>
         </div>
+      )}
 
-        <div className="mb-6">
-          <Input
-            type="text"
-            placeholder="Search by product name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {selectedRows.size > 0 && (
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-            <span className="text-blue-900">
-              {selectedRows.size} item{selectedRows.size > 1 ? "s" : ""}{" "}
-              selected
-            </span>
-            <button
-              onClick={handleBulkDeleteClick}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Delete Selected
-            </button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 px-3 py-2 text-left font-semibold w-10">
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  className="cursor-pointer"
+                />
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("name")}
+              >
+                Name{getSortIndicator("name")}
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Categories
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("unitOfMeasurement")}
+              >
+                Unit{getSortIndicator("unitOfMeasurement")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("pricePerUnit")}
+              >
+                Price{getSortIndicator("pricePerUnit")}
+              </th>
+              <th
+                className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
+                onClick={() => handleSort("minimumStock")}
+              >
+                Min Stock{getSortIndicator("minimumStock")}
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Source
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Storefront
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Organic
+              </th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedProducts.length === 0 ? (
               <tr>
-                <th className="border border-gray-300 px-3 py-2 text-left font-semibold w-10">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAll}
-                    className="cursor-pointer"
-                  />
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("name")}
+                <td
+                  colSpan={10}
+                  className="border border-gray-300 px-4 py-2 text-center text-gray-500"
                 >
-                  Name{getSortIndicator("name")}
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Categories
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("unitOfMeasurement")}
-                >
-                  Unit{getSortIndicator("unitOfMeasurement")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("pricePerUnit")}
-                >
-                  Price{getSortIndicator("pricePerUnit")}
-                </th>
-                <th
-                  className="border border-gray-300 px-4 py-2 text-left font-semibold cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("minimumStock")}
-                >
-                  Min Stock{getSortIndicator("minimumStock")}
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Source
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Storefront
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Organic
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
-                  Actions
-                </th>
+                  {products.length === 0
+                    ? "No products available"
+                    : "No products match your search"}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {sortedProducts.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={10}
-                    className="border border-gray-300 px-4 py-2 text-center text-gray-500"
+            ) : (
+              sortedProducts.map((product, idx) => {
+                const originalIdx = products.indexOf(product);
+                return (
+                  <tr
+                    key={product.id}
+                    className={`hover:bg-gray-50 ${
+                      selectedRows.has(originalIdx) ? "bg-blue-100" : ""
+                    }`}
                   >
-                    {products.length === 0
-                      ? "No products available"
-                      : "No products match your search"}
-                  </td>
-                </tr>
-              ) : (
-                sortedProducts.map((product, idx) => {
-                  const originalIdx = products.indexOf(product);
-                  return (
-                    <tr
-                      key={product.id}
-                      className={`hover:bg-gray-50 ${
-                        selectedRows.has(originalIdx) ? "bg-blue-100" : ""
-                      }`}
-                    >
-                      <td className="border border-gray-300 px-3 py-2 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.has(originalIdx)}
-                          onChange={() => handleSelectRow(originalIdx)}
-                          className="cursor-pointer"
-                        />
-                      </td>
-                      {inlineEditingId === product.id && inlineEditData ? (
-                        <>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="text"
-                              value={inlineEditData.name || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  name: e.target.value,
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-1 min-h-8">
-                                {(
-                                  (inlineEditData as any).categoryIds || []
-                                ).map((catId: number) => {
+                    <td className="border border-gray-300 px-3 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(originalIdx)}
+                        onChange={() => handleSelectRow(originalIdx)}
+                        className="cursor-pointer"
+                      />
+                    </td>
+                    {inlineEditingId === product.id && inlineEditData ? (
+                      <>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="text"
+                            value={inlineEditData.name || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                name: e.target.value,
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap gap-1 min-h-8">
+                              {((inlineEditData as any).categoryIds || []).map(
+                                (catId: number) => {
                                   const cat = categories.find(
                                     (c) => c.id === catId
                                   );
@@ -482,436 +478,431 @@ export default function ProductsPage() {
                                       </button>
                                     </span>
                                   );
-                                })}
-                              </div>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={inlineCategoryInput}
-                                  onChange={(e) =>
-                                    setInlineCategoryInput(e.target.value)
-                                  }
-                                  placeholder="Search categories..."
-                                  className="w-full px-2 py-1 border rounded text-sm"
-                                />
-                                {inlineCategoryInput && (
-                                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 z-10 max-h-32 overflow-y-auto">
-                                    {categories
-                                      .filter(
-                                        (cat) =>
-                                          cat.name
-                                            .toLowerCase()
-                                            .includes(
-                                              inlineCategoryInput.toLowerCase()
-                                            ) &&
-                                          !(
-                                            (inlineEditData as any)
-                                              .categoryIds || []
-                                          ).includes(cat.id)
-                                      )
-                                      .map((cat) => (
-                                        <button
-                                          key={cat.id}
-                                          type="button"
-                                          onClick={() =>
-                                            handleAddCategoryToInline(cat.id)
-                                          }
-                                          className="w-full text-left px-2 py-1 hover:bg-gray-100 text-sm"
-                                        >
-                                          {cat.name}
-                                        </button>
-                                      ))}
-                                  </div>
-                                )}
-                              </div>
+                                }
+                              )}
                             </div>
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="text"
-                              value={inlineEditData.unitOfMeasurement || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  unitOfMeasurement: e.target.value,
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={inlineEditData.pricePerUnit || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  pricePerUnit: parseFloat(e.target.value),
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <input
-                              type="number"
-                              value={inlineEditData.minimumStock || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  minimumStock: parseInt(e.target.value),
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <select
-                              value={inlineEditData.sourceId || ""}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  sourceId: e.target.value
-                                    ? parseInt(e.target.value)
-                                    : undefined,
-                                })
-                              }
-                              className="w-full px-2 py-1 border rounded"
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={inlineCategoryInput}
+                                onChange={(e) =>
+                                  setInlineCategoryInput(e.target.value)
+                                }
+                                placeholder="Search categories..."
+                                className="w-full px-2 py-1 border rounded text-sm"
+                              />
+                              {inlineCategoryInput && (
+                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 z-10 max-h-32 overflow-y-auto">
+                                  {categories
+                                    .filter(
+                                      (cat) =>
+                                        cat.name
+                                          .toLowerCase()
+                                          .includes(
+                                            inlineCategoryInput.toLowerCase()
+                                          ) &&
+                                        !(
+                                          (inlineEditData as any).categoryIds ||
+                                          []
+                                        ).includes(cat.id)
+                                    )
+                                    .map((cat) => (
+                                      <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() =>
+                                          handleAddCategoryToInline(cat.id)
+                                        }
+                                        className="w-full text-left px-2 py-1 hover:bg-gray-100 text-sm"
+                                      >
+                                        {cat.name}
+                                      </button>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="text"
+                            value={inlineEditData.unitOfMeasurement || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                unitOfMeasurement: e.target.value,
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={inlineEditData.pricePerUnit || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                pricePerUnit: parseFloat(e.target.value),
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <input
+                            type="number"
+                            value={inlineEditData.minimumStock || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                minimumStock: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <select
+                            value={inlineEditData.sourceId || ""}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                sourceId: e.target.value
+                                  ? parseInt(e.target.value)
+                                  : undefined,
+                              })
+                            }
+                            className="w-full px-2 py-1 border rounded"
+                          >
+                            <option value="">Select source</option>
+                            {sources.map((source) => (
+                              <option key={source.id} value={source.id}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={inlineEditData.showInStorefront || false}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                showInStorefront: e.target.checked,
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={inlineEditData.isOrganic || false}
+                            onChange={(e) =>
+                              setInlineEditData({
+                                ...inlineEditData,
+                                isOrganic: e.target.checked,
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleInlineSave(product.id)}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
                             >
-                              <option value="">Select source</option>
-                              {sources.map((source) => (
-                                <option key={source.id} value={source.id}>
-                                  {source.name}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1 text-center">
-                            <input
-                              type="checkbox"
-                              checked={inlineEditData.showInStorefront || false}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  showInStorefront: e.target.checked,
-                                })
-                              }
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1 text-center">
-                            <input
-                              type="checkbox"
-                              checked={inlineEditData.isOrganic || false}
-                              onChange={(e) =>
-                                setInlineEditData({
-                                  ...inlineEditData,
-                                  isOrganic: e.target.checked,
-                                })
-                              }
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-2 py-1">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => handleInlineSave(product.id)}
-                                className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
-                              >
-                                Save
-                              </button>
-                              <button
-                                onClick={handleInlineCancel}
-                                className="bg-gray-400 text-white px-2 py-1 rounded text-sm hover:bg-gray-500"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {product.name}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2 text-sm">
-                            {product.categories
-                              ?.map((c) => c.name)
-                              .join(", ") || "—"}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {product.unitOfMeasurement}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            ${product.pricePerUnit.toFixed(2)}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {product.minimumStock}
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            {product.source?.name || "—"}
-                          </td>
-                          <td
-                            className="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
+                              Save
+                            </button>
+                            <button
+                              onClick={handleInlineCancel}
+                              className="bg-gray-400 text-white px-2 py-1 rounded text-sm hover:bg-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {product.name}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-sm">
+                          {product.categories?.map((c) => c.name).join(", ") ||
+                            "—"}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {product.unitOfMeasurement}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          ${product.pricePerUnit.toFixed(2)}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {product.minimumStock}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          {product.source?.name || "—"}
+                        </td>
+                        <td
+                          className="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-100"
+                          onClick={() =>
+                            handleToggleBooleanField(
+                              product.id,
+                              "showInStorefront",
+                              product.showInStorefront
+                            )
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={product.showInStorefront}
+                            onChange={() =>
                               handleToggleBooleanField(
                                 product.id,
                                 "showInStorefront",
                                 product.showInStorefront
                               )
                             }
-                          >
-                            <input
-                              type="checkbox"
-                              checked={product.showInStorefront}
-                              onChange={() =>
-                                handleToggleBooleanField(
-                                  product.id,
-                                  "showInStorefront",
-                                  product.showInStorefront
-                                )
-                              }
-                              className="cursor-pointer"
-                            />
-                          </td>
-                          <td
-                            className="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-100"
-                            onClick={() =>
+                            className="cursor-pointer"
+                          />
+                        </td>
+                        <td
+                          className="border border-gray-300 px-4 py-2 text-center cursor-pointer hover:bg-gray-100"
+                          onClick={() =>
+                            handleToggleBooleanField(
+                              product.id,
+                              "isOrganic",
+                              product.isOrganic
+                            )
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={product.isOrganic}
+                            onChange={() =>
                               handleToggleBooleanField(
                                 product.id,
                                 "isOrganic",
                                 product.isOrganic
                               )
                             }
-                          >
-                            <input
-                              type="checkbox"
-                              checked={product.isOrganic}
-                              onChange={() =>
-                                handleToggleBooleanField(
-                                  product.id,
-                                  "isOrganic",
-                                  product.isOrganic
-                                )
-                              }
-                              className="cursor-pointer"
-                            />
-                          </td>
-                          <td className="border border-gray-300 px-4 py-2">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleInlineEdit(product)}
-                                className="text-blue-600 hover:text-blue-800 font-medium"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDelete(product.id)}
-                                className="text-red-600 hover:text-red-800 font-medium"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                            className="cursor-pointer"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleInlineEdit(product)}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          title={editingId ? "Edit Product" : "New Product"}
-        >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                {...register("name", { required: "Name is required" })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-              />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
-                </p>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={editingId ? "Edit Product" : "New Product"}
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              {...register("name", { required: "Name is required" })}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Categories</label>
+            <div className="space-y-2 mb-3 p-3 border rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
+              {categories.length === 0 ? (
+                <p className="text-gray-500 text-sm">No categories yet</p>
+              ) : (
+                categories.map((cat) => (
+                  <label key={cat.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      {...register("categoryIds")}
+                      value={cat.id}
+                      className="rounded"
+                    />
+                    <span>{cat.name}</span>
+                  </label>
+                ))
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Categories
-              </label>
-              <div className="space-y-2 mb-3 p-3 border rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
-                {categories.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No categories yet</p>
-                ) : (
-                  categories.map((cat) => (
-                    <label key={cat.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        {...register("categoryIds")}
-                        value={cat.id}
-                        className="rounded"
-                      />
-                      <span>{cat.name}</span>
-                    </label>
-                  ))
-                )}
-              </div>
+            {!showNewCategoryInput && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowNewCategoryInput(true)}
+                className="text-sm"
+              >
+                + Add New Category
+              </Button>
+            )}
 
-              {!showNewCategoryInput && (
+            {showNewCategoryInput && (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={categoryInputValue}
+                  onChange={(e) => setCategoryInputValue(e.target.value)}
+                  placeholder="Category name..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNewCategory();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddNewCategory}
+                  className="text-sm"
+                >
+                  Add
+                </Button>
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setShowNewCategoryInput(true)}
+                  onClick={() => {
+                    setShowNewCategoryInput(false);
+                    setCategoryInputValue("");
+                  }}
                   className="text-sm"
                 >
-                  + Add New Category
+                  Cancel
                 </Button>
-              )}
+              </div>
+            )}
+          </div>
 
-              {showNewCategoryInput && (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={categoryInputValue}
-                    onChange={(e) => setCategoryInputValue(e.target.value)}
-                    placeholder="Category name..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddNewCategory();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleAddNewCategory}
-                    className="text-sm"
-                  >
-                    Add
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setShowNewCategoryInput(false);
-                      setCategoryInputValue("");
-                    }}
-                    className="text-sm"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  {...register("isOrganic")}
-                  className="rounded"
-                />
-                <span>Is Organic</span>
-              </label>
-            </div>
-            <div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  {...register("showInStorefront")}
-                  className="rounded"
-                />
-                <span>Show in Storefront</span>
-              </label>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Unit of Measurement
-              </label>
+          <div>
+            <label className="flex items-center gap-2">
               <input
-                {...register("unitOfMeasurement", {
-                  required: "Unit of measurement is required",
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                type="checkbox"
+                {...register("isOrganic")}
+                className="rounded"
               />
-              {errors.unitOfMeasurement && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.unitOfMeasurement.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Price Per Unit
-              </label>
+              <span>Is Organic</span>
+            </label>
+          </div>
+          <div>
+            <label className="flex items-center gap-2">
               <input
-                type="number"
-                step="0.01"
-                {...register("pricePerUnit", {
-                  required: "Price per unit is required",
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                type="checkbox"
+                {...register("showInStorefront")}
+                className="rounded"
               />
-              {errors.pricePerUnit && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.pricePerUnit.message}
-                </p>
-              )}
-            </div>
+              <span>Show in Storefront</span>
+            </label>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Minimum Stock
-              </label>
-              <input
-                type="number"
-                {...register("minimumStock", {
-                  required: "Minimum stock is required",
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-              />
-              {errors.minimumStock && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.minimumStock.message}
-                </p>
-              )}
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Unit of Measurement
+            </label>
+            <input
+              {...register("unitOfMeasurement", {
+                required: "Unit of measurement is required",
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            />
+            {errors.unitOfMeasurement && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.unitOfMeasurement.message}
+              </p>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Source (Optional)
-              </label>
-              <select
-                {...register("sourceId")}
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-              >
-                <option value="">Select a source</option>
-                {sources.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Price Per Unit
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              {...register("pricePerUnit", {
+                required: "Price per unit is required",
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            />
+            {errors.pricePerUnit && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.pricePerUnit.message}
+              </p>
+            )}
+          </div>
 
-            <div className="flex gap-2">
-              <Button type="submit">Save</Button>
-              <Button variant="secondary" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Dialog>
-      </main>
-    </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Minimum Stock
+            </label>
+            <input
+              type="number"
+              {...register("minimumStock", {
+                required: "Minimum stock is required",
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            />
+            {errors.minimumStock && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.minimumStock.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Source (Optional)
+            </label>
+            <select
+              {...register("sourceId")}
+              className="w-full px-3 py-2 border border-gray-300 rounded"
+            >
+              <option value="">Select a source</option>
+              {sources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="submit">Save</Button>
+            <Button variant="secondary" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </main>
   );
 }

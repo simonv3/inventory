@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
       id: customer.id,
       name: customer.name,
       email: customer.email,
+      isAdmin: customer.isAdmin,
     });
   } catch (error) {
     console.error("Error getting customer:", error);

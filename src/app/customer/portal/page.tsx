@@ -2,38 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
+import { useAuth } from "@/context/AuthContext";
 import { Sale } from "@/types";
 
-interface CustomerData {
-  id: number;
-  name: string;
-  email: string;
-}
-
 export default function CustomerPortal() {
-  const [customer, setCustomer] = useState<CustomerData | null>(null);
+  const { customer, loading } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
+  console.log("customer", customer, loading);
   useEffect(() => {
-    // Fetch current customer from API (uses cookie)
-    const fetchCustomer = async () => {
+    if (loading) return;
+
+    if (!customer) {
+      router.push("/customer/login");
+      return;
+    }
+
+    // Fetch customer's sales
+    const fetchSales = async () => {
       try {
-        const response = await fetch("/api/auth/me", {
-          credentials: "include", // Include cookies
-        });
-
-        if (!response.ok) {
-          router.push("/customer/login");
-          return;
-        }
-
-        const customerData = await response.json();
-        setCustomer(customerData);
-
-        // Fetch customer's sales
         const salesResponse = await fetch("/api/sales", {
           credentials: "include",
         });
@@ -41,20 +28,17 @@ export default function CustomerPortal() {
           const sales = await salesResponse.json();
           // Filter sales for this customer
           const customerSales = sales.filter(
-            (sale: Sale) => sale.customerId === customerData.id
+            (sale: Sale) => sale.customerId === customer.id
           );
           setSales(customerSales);
         }
       } catch (error) {
-        console.error("Error fetching customer:", error);
-        router.push("/customer/login");
-      } finally {
-        setLoading(false);
+        console.error("Error fetching sales:", error);
       }
     };
 
-    fetchCustomer();
-  }, [router]);
+    fetchSales();
+  }, [customer, loading, router]);
 
   if (loading || !customer) {
     return (
@@ -66,8 +50,6 @@ export default function CustomerPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar customerName={customer.name} onLogout={() => router.push("/")} />
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Account Information */}

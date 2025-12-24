@@ -2,23 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const token = request.cookies.get("customerToken");
+  const token = request.cookies.get("customerToken")?.value;
 
-  // Protect dashboard and customer portal - require authentication
-  if (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/customer/portal")
-  ) {
+  // Protect dashboard routes - require authentication
+  if (pathname.startsWith("/dashboard")) {
     if (!token) {
-      // Redirect to home page if not authenticated
+      // Redirect to login if not authenticated
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  // Protect order pages - require authentication
-  if (pathname.startsWith("/order")) {
+  // Protect customer portal and order pages - require authentication
+  if (
+    pathname.startsWith("/customer/portal") ||
+    pathname.startsWith("/order")
+  ) {
     if (!token) {
-      // Redirect to home page if not authenticated
+      // Redirect to login if not authenticated
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
