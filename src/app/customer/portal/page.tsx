@@ -9,7 +9,6 @@ export default function CustomerPortal() {
   const { customer, loading } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const router = useRouter();
-  console.log("customer", customer, loading);
   useEffect(() => {
     if (loading || !customer) return;
 

@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import OTPLoginForm from "@/components/OTPLoginForm";
 
 export default function Home() {
-  const { customer, loading } = useAuth();
+  const { customer, loading, refreshToken } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +29,7 @@ export default function Home() {
       <OTPLoginForm
         title="Green's and Beans Grocery"
         redirectPath="/customer/portal"
+        onLoginSuccess={refreshToken}
       />
       <div className="fixed bottom-8 left-0 right-0 text-center">
         <Link
