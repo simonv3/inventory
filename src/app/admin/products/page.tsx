@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Dialog, Input, Select } from "@/components";
+import { Button, Dialog, Input, Select, BulkImportDialog } from "@/components";
 import { Product, Category, Source } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
+import { useStore } from "@/context/StoreContext";
 
 interface ProductFormInputs {
   name: string;
@@ -20,6 +21,7 @@ interface ProductFormInputs {
 }
 
 export default function ProductsPage() {
+  const { currentStoreId, loading: storeLoading } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
@@ -36,6 +38,7 @@ export default function ProductsPage() {
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { fetchData } = useApiWithToast();
   const {
     register,
@@ -57,27 +60,35 @@ export default function ProductsPage() {
     },
   });
 
-  useEffect(() => {
-    const loadAllData = async () => {
-      await Promise.all([
-        (async () => {
-          const data = await fetchData<Product[]>("/api/products");
-          if (data) setProducts(data);
-        })(),
-        (async () => {
-          const data = await fetchData<Category[]>("/api/categories");
-          if (data) setCategories(data);
-        })(),
-        (async () => {
-          const data = await fetchData<Source[]>("/api/sources");
-          if (data) setSources(data);
-        })(),
-      ]);
+  const loadData = async () => {
+    if (!currentStoreId) {
       setLoading(false);
-    };
+      return;
+    }
 
-    loadAllData();
-  }, []);
+    await Promise.all([
+      (async () => {
+        const data = await fetchData<Product[]>(
+          `/api/products?storeId=${currentStoreId}`
+        );
+        if (data) setProducts(data);
+      })(),
+      (async () => {
+        const data = await fetchData<Category[]>("/api/categories");
+        if (data) setCategories(data);
+      })(),
+      (async () => {
+        const data = await fetchData<Source[]>("/api/sources");
+        if (data) setSources(data);
+      })(),
+    ]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStoreId]);
 
   const handleOpenDialog = (product?: Product) => {
     if (product) {
@@ -321,6 +332,8 @@ export default function ProductsPage() {
     getSortIndicator,
   } = useSortableTable({
     data: filteredProducts,
+    defaultSortKey: "name",
+    defaultDirection: "asc",
   });
 
   if (loading) return <div>Loading...</div>;
@@ -329,7 +342,15 @@ export default function ProductsPage() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
-        <Button onClick={() => handleOpenDialog()}>+ New Product</Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setImportDialogOpen(true)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Import CSV
+          </Button>
+          <Button onClick={() => handleOpenDialog()}>+ New Product</Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -903,6 +924,17 @@ export default function ProductsPage() {
           </div>
         </form>
       </Dialog>
+
+      <BulkImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        storeId={currentStoreId}
+        onImportSuccess={() => {
+          setProducts([]);
+          setLoading(true);
+          loadData();
+        }}
+      />
     </main>
   );
 }

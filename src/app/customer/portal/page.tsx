@@ -11,12 +11,7 @@ export default function CustomerPortal() {
   const router = useRouter();
   console.log("customer", customer, loading);
   useEffect(() => {
-    if (loading) return;
-
-    if (!customer) {
-      router.push("/customer/login");
-      return;
-    }
+    if (loading || !customer) return;
 
     // Fetch customer's sales
     const fetchSales = async () => {

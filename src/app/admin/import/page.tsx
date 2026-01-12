@@ -2,11 +2,21 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components";
+import { useStore } from "@/context/StoreContext";
+
+interface ImportResult {
+  type: string;
+  success: number;
+  failed: number;
+  errors: Array<{ row: number; error?: string }>;
+}
 
 export default function ImportPage() {
+  const { currentStoreId, stores, loading: storeLoading } = useStore();
+  const currentStore = stores.find((s) => s.id === currentStoreId);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +39,11 @@ export default function ImportPage() {
       return;
     }
 
+    if (!currentStore) {
+      setError("Please select a store first");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setResult(null);
@@ -36,6 +51,7 @@ export default function ImportPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("storeId", currentStore.id.toString());
 
       const res = await fetch("/api/import/csv", {
         method: "POST",
@@ -72,6 +88,25 @@ export default function ImportPage() {
           received. The system will automatically detect the data type based on
           column names.
         </p>
+
+        {storeLoading ? (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-blue-800">Loading store information...</p>
+          </div>
+        ) : !currentStore ? (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-yellow-800">
+              <strong>Warning:</strong> No store selected. Please select a store
+              from the top navigation.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-blue-800">
+              <strong>Importing to store:</strong> {currentStore.name}
+            </p>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -124,7 +159,7 @@ export default function ImportPage() {
                 </p>
                 <ul className="text-sm text-red-600 space-y-1 max-h-48 overflow-y-auto">
                   {result.errors.map(
-                    (err: { row: number; error: string }, idx: number) => (
+                    (err: { row: number; error?: string }, idx: number) => (
                       <li key={idx}>
                         Row {err.row}: {err.error}
                       </li>

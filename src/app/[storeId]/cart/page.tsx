@@ -2,21 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
+import { useParams } from "next/navigation";
 import { Button } from "@/components";
 import { CustomerAutocomplete } from "@/components/CustomerAutocomplete";
 import { Customer, Product } from "@/types";
-import QRCode from "qrcode";
-import { SaleFormInputs } from "@/app/dashboard/sales/page";
+import { SaleFormInputs } from "@/app/admin/sales/page";
 
 export default function ShoppingCartPage() {
+  const params = useParams();
+  const storeId = parseInt(params.storeId as string);
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(true);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderUrl, setOrderUrl] = useState("");
-  const [qrCode, setQrCode] = useState<string>("");
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [storeName, setStoreName] = useState<string>("");
+  const [paymentLinkTemplate, setPaymentLinkTemplate] = useState<string>("");
 
   const {
     register,
@@ -29,7 +33,7 @@ export default function ShoppingCartPage() {
   } = useForm<SaleFormInputs>({
     defaultValues: {
       customerId: "",
-      markupPercent: "20",
+      markupPercent: "0",
       items: [{ productId: "", quantity: "" }],
     },
   });
@@ -37,27 +41,52 @@ export default function ShoppingCartPage() {
   const selectedCustomerId = watch("customerId");
 
   useEffect(() => {
+    if (!storeId || isNaN(storeId)) {
+      setLoading(false);
+      return;
+    }
+
     Promise.all([
-      fetch("/api/customers").then((r) => r.json()),
-      fetch("/api/products").then((r) => r.json()),
+      fetch(`/api/customers?storeId=${storeId}`).then((r) => r.json()),
+      fetch(`/api/products?storeId=${storeId}`).then((r) => r.json()),
+      fetch(`/api/stores/${storeId}`).then((r) => r.json()),
     ])
-      .then(([custs, prods]) => {
+      .then(([custs, prods, store]) => {
         setCustomers(custs);
         setProducts(prods);
+        if (store && store.name) {
+          setStoreName(store.name);
+        }
+        if (store && store.paymentLink) {
+          setPaymentLinkTemplate(store.paymentLink);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [storeId]);
 
+  // When customer is selected, fetch their markup for this store
   useEffect(() => {
-    if (selectedCustomerId) {
-      const customer = customers.find(
-        (c) => c.id === parseInt(selectedCustomerId)
+    if (!selectedCustomerId || !storeId) {
+      return;
+    }
+
+    const customer = customers.find(
+      (c) => c.id === parseInt(selectedCustomerId)
+    );
+
+    if (customer) {
+      // Find the customer store relationship for this store
+      const customerStore = customer.stores?.find(
+        (cs) => cs.storeId === storeId
       );
-      if (customer) {
-        setValue("markupPercent", customer.markupPercent.toString());
+      if (customerStore) {
+        setValue("markupPercent", customerStore.markupPercent.toString());
       }
     }
-  }, [selectedCustomerId, customers, setValue]);
+  }, [selectedCustomerId, customers, storeId, setValue]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -97,12 +126,17 @@ export default function ShoppingCartPage() {
         const sale = await res.json();
         console.log("sale", sale);
         setOrderId(sale.id);
-        const openCollectiveUrl = `https://opencollective.com/greens-and-beans/contribute/store-purchase-89569/checkout?interval=oneTime&amount=${sale.totalPrice}&contributeAs=me`;
-        setOrderUrl(openCollectiveUrl);
 
-        // Generate QR code
-        const qrDataUrl = await QRCode.toDataURL(openCollectiveUrl);
-        setQrCode(qrDataUrl);
+        // Use the payment link template from the store, replacing {{amount}} with the actual amount
+        let paymentUrl =
+          paymentLinkTemplate ||
+          `https://opencollective.com/greens-and-beans/contribute/store-purchase-89569/checkout?interval=oneTime&amount={{amount}}&contributeAs=me`;
+        paymentUrl = paymentUrl.replace(
+          "{{amount}}",
+          sale.totalPrice.toString()
+        );
+
+        setOrderUrl(paymentUrl);
 
         setOrderComplete(true);
         setDialogOpen(false);
@@ -117,12 +151,11 @@ export default function ShoppingCartPage() {
 
   const handleNewOrder = () => {
     setOrderComplete(false);
-    setQrCode("");
     setOrderId(null);
     setOrderUrl("");
     reset({
       customerId: "",
-      markupPercent: "20",
+      markupPercent: "0",
       items: [{ productId: "", quantity: "" }],
     });
     setDialogOpen(true);
@@ -136,9 +169,23 @@ export default function ShoppingCartPage() {
     );
   }
 
+  if (!storeId || isNaN(storeId)) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h1 className="text-2xl font-bold text-red-700 mb-2">
+            Invalid Store
+          </h1>
+          <p className="text-red-600">Please provide a valid store ID.</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
+      {storeName && <p className="text-lg text-gray-600 mb-8">{storeName}</p>}
 
       {orderComplete ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -151,34 +198,15 @@ export default function ShoppingCartPage() {
             </p>
           </div>
 
-          <div className="flex justify-center mb-8">
-            <div className="p-4 bg-white border-2 border-gray-200 rounded-lg">
-              {qrCode && (
-                <img src={qrCode} alt="Order QR Code" className="w-64 h-64" />
-              )}
-            </div>
-          </div>
-
           <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Order Link:</p>
-            <p className="font-mono text-sm break-all text-blue-600 mb-4">
-              {orderUrl}
-            </p>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(orderUrl);
-                alert("Link copied to clipboard!");
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2"
-            >
-              Copy Link
-            </button>
+            <p className="text-sm text-gray-600 mb-4">Complete your payment:</p>
             <a
-              href={qrCode}
-              download={`order-qr-${orderId}.png`}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 inline-block"
+              href={orderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
             >
-              Download QR Code
+              Go to Payment
             </a>
           </div>
 
@@ -204,15 +232,16 @@ export default function ShoppingCartPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Markup %
+                  Markup % (from customer settings)
                 </label>
                 <input
                   type="number"
                   step="0.01"
+                  readOnly
                   {...register("markupPercent", {
                     required: "Markup % is required",
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 cursor-not-allowed"
                 />
                 {errors.markupPercent && (
                   <p className="text-red-500 text-sm mt-1">
@@ -353,8 +382,71 @@ export default function ShoppingCartPage() {
                 </Button>
               </div>
 
+              {(() => {
+                let subtotal = 0;
+                fields.forEach((field: any, idx: number) => {
+                  const productId = watch(`items.${idx}.productId`);
+                  const product = products.find(
+                    (p) => p.id === parseInt(productId || "0")
+                  );
+                  if (product) {
+                    const costPrice = product.pricePerUnit || 0;
+                    const markupPercent = watch("markupPercent");
+                    const markup = parseFloat(markupPercent || "0") / 100;
+                    const salePrice = costPrice * (1 + markup);
+                    let finalQuantity = parseFloat(
+                      watch(`items.${idx}.quantity`) || "0"
+                    );
+
+                    if (product.unitOfMeasurement === "lb") {
+                      const quantityOz = watch(`items.${idx}.quantityOz`);
+                      if (quantityOz) {
+                        finalQuantity += parseFloat(quantityOz) / 16;
+                      }
+                    }
+                    subtotal += salePrice * finalQuantity;
+                  }
+                });
+
+                const markupPercent = parseFloat(watch("markupPercent") || "0");
+                const costSubtotal = subtotal / (1 + markupPercent / 100);
+                const markupAmount = subtotal - costSubtotal;
+                const total = subtotal;
+
+                return (
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Subtotal (Cost):</span>
+                        <span className="font-medium">
+                          ${costSubtotal.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm border-t border-blue-200 pt-2">
+                        <span className="text-gray-600">
+                          Markup ({markupPercent}%):
+                        </span>
+                        <span className="font-medium text-green-600">
+                          +${markupAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold border-t border-blue-200 pt-2">
+                        <span>Total:</span>
+                        <span className="text-blue-600">
+                          ${total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={!selectedCustomerId}
+                >
                   Place Order
                 </Button>
               </div>

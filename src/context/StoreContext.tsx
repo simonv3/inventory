@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 interface StoreContextType {
   currentStoreId: number | null;
@@ -15,6 +16,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [currentStoreId, setCurrentStoreId] = useState<number | null>(null);
   const [stores, setStores] = useState<Array<{ id: number; name: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const { customer } = useAuth();
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -25,12 +27,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const storesData = await response.json();
           setStores(storesData);
-          
+
           // Set first store as default
           if (storesData.length > 0) {
             const savedStoreId = localStorage.getItem("currentStoreId");
-            const storeId = savedStoreId 
-              ? parseInt(savedStoreId) 
+            const storeId = savedStoreId
+              ? parseInt(savedStoreId)
               : storesData[0].id;
             setCurrentStoreId(storeId);
           }
@@ -43,7 +45,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     fetchStores();
-  }, []);
+  }, [customer]);
 
   const handleSetCurrentStoreId = (storeId: number) => {
     setCurrentStoreId(storeId);

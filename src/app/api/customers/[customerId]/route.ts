@@ -37,19 +37,22 @@ export async function PUT(
   try {
     const { customerId } = await params;
     const body = await request.json();
-    const { name, email, markupPercent, customerTypeId } = body;
+    const { name, email } = body;
 
     const customer = await prisma.customer.update({
       where: { id: parseInt(customerId) },
       data: {
         ...(name && { name }),
         ...(email && { email }),
-        ...(markupPercent !== undefined && { markupPercent }),
-        ...(customerTypeId !== undefined && {
-          customerTypeId: customerTypeId ? parseInt(customerTypeId) : null,
-        }),
       },
-      include: { customerType: true },
+      include: {
+        stores: {
+          include: {
+            store: true,
+            customerType: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(customer);

@@ -3,3 +3,4 @@ export { CustomerAutocomplete } from "./CustomerAutocomplete";
 export { StoreSelector } from "./StoreSelector";
 export { AdminGuard } from "./AdminGuard";
 export { Dialog, Button, Input, Select, Table } from "./UI";
+export { default as BulkImportDialog } from "./BulkImportDialog";

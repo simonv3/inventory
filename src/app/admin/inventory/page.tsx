@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Dialog, Input, Select } from "@/components";
+import { Button, Dialog, Input, Select, BulkImportDialog } from "@/components";
 import { InventoryReceived, Product } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
+import { useStore } from "@/context/StoreContext";
 
 export default function InventoryPage() {
+  const { currentStoreId, loading: storeLoading } = useStore();
   const [inventory, setInventory] = useState<InventoryReceived[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,6 +18,7 @@ export default function InventoryPage() {
   const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
   const [inlineEditData, setInlineEditData] =
     useState<Partial<InventoryReceived> | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { fetchData } = useApiWithToast();
   const [formData, setFormData] = useState({
     productId: "",
@@ -24,19 +27,27 @@ export default function InventoryPage() {
     receiptUrl: "",
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      const [inv, prods] = await Promise.all([
-        fetchData<InventoryReceived[]>("/api/inventory"),
-        fetchData<Product[]>("/api/products"),
-      ]);
-      if (inv) setInventory(inv);
-      if (prods) setProducts(prods);
+  const loadData = async () => {
+    if (!currentStoreId) {
       setLoading(false);
-    };
+      return;
+    }
 
+    const [inv, prods] = await Promise.all([
+      fetchData<InventoryReceived[]>(
+        `/api/inventory?storeId=${currentStoreId}`
+      ),
+      fetchData<Product[]>(`/api/products?storeId=${currentStoreId}`),
+    ]);
+    if (inv) setInventory(inv);
+    if (prods) setProducts(prods);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStoreId]);
 
   const handleOpenDialog = (item?: InventoryReceived) => {
     if (item) {
@@ -211,6 +222,8 @@ export default function InventoryPage() {
     getSortIndicator,
   } = useSortableTable({
     data: filteredInventory,
+    defaultSortKey: "productId",
+    defaultDirection: "asc",
   });
 
   if (loading) return <div>Loading...</div>;
@@ -219,7 +232,15 @@ export default function InventoryPage() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Inventory Received</h1>
-        <Button onClick={() => handleOpenDialog()}>+ New Entry</Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setImportDialogOpen(true)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Import CSV
+          </Button>
+          <Button onClick={() => handleOpenDialog()}>+ New Entry</Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -488,6 +509,17 @@ export default function InventoryPage() {
           </div>
         </form>
       </Dialog>
+
+      <BulkImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        storeId={currentStoreId}
+        onImportSuccess={() => {
+          setInventory([]);
+          setLoading(true);
+          loadData();
+        }}
+      />
     </main>
   );
 }

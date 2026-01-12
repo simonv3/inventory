@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
-  const { customer, loading } = useAuth();
+  const { customer, loading, isStoreManager } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
 
-    // Redirect if not admin
-    if (!customer || !customer.isAdmin) {
+    // Redirect if not admin or store manager
+    if (!customer || (!customer.isAdmin && !isStoreManager)) {
       router.replace("/");
     }
-  }, [customer, loading, router]);
+  }, [customer, loading, isStoreManager, router]);
 
   // Show loading while checking auth
   if (loading) {
@@ -26,8 +26,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Don't render if not admin
-  if (!customer || !customer.isAdmin) {
+  // Don't render if not admin or store manager
+  if (!customer || (!customer.isAdmin && !isStoreManager)) {
     return null;
   }
 

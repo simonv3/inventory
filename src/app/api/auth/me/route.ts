@@ -15,9 +15,16 @@ export async function GET(request: NextRequest) {
     );
     const customerId = decodedToken.customerId;
 
-    // Fetch customer from database
+    // Fetch customer from database with stores
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
+      include: {
+        stores: {
+          include: {
+            store: true,
+          },
+        },
+      },
     });
 
     if (!customer) {
@@ -32,6 +39,7 @@ export async function GET(request: NextRequest) {
       name: customer.name,
       email: customer.email,
       isAdmin: customer.isAdmin,
+      stores: customer.stores,
     });
   } catch (error) {
     console.error("Error getting customer:", error);

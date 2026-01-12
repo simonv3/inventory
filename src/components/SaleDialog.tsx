@@ -1,6 +1,6 @@
 "use client";
 
-import { SaleFormInputs } from "@/app/dashboard/sales/page";
+import { SaleFormInputs } from "@/app/admin/sales/page";
 import { Button } from "@/components";
 import { Customer, Product } from "@/types";
 

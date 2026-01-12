@@ -8,9 +8,14 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const storeId = formData.get("storeId") as string;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (!storeId) {
+      return NextResponse.json({ error: "No store selected" }, { status: 400 });
     }
 
     const text = await file.text();
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Import based on content
-    const results = await importData(data);
+    const results = await importData(data, parseInt(storeId));
 
     return NextResponse.json(results, { status: 200 });
   } catch (error) {
@@ -75,7 +80,10 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-async function importData(rows: Record<string, string>[]): Promise<{
+async function importData(
+  rows: Record<string, string>[],
+  storeId: number
+): Promise<{
   success: number;
   failed: number;
   errors: { row: number; error?: string }[];
@@ -131,7 +139,7 @@ async function importData(rows: Record<string, string>[]): Promise<{
     let rowIndex = 2;
     for (const [orderId, orderRows] of orderMap) {
       try {
-        const result = await importSaleOrder(orderId, orderRows);
+        const result = await importSaleOrder(orderId, orderRows, rowIndex);
         if (result.success) {
           success += orderRows.length;
         } else {
@@ -148,7 +156,7 @@ async function importData(rows: Record<string, string>[]): Promise<{
     for (let i = 0; i < rows.length; i++) {
       try {
         const row = rows[i];
-        const result = await importInventory(row);
+        const result = await importInventory(row, storeId);
         if (result.success) {
           success++;
         } else {
@@ -164,7 +172,7 @@ async function importData(rows: Record<string, string>[]): Promise<{
     for (let i = 0; i < rows.length; i++) {
       try {
         const row = rows[i];
-        const result = await importProduct(row);
+        const result = await importProduct(row, storeId);
         if (result.success) {
           success++;
         } else {
@@ -180,7 +188,7 @@ async function importData(rows: Record<string, string>[]): Promise<{
     for (let i = 0; i < rows.length; i++) {
       try {
         const row = rows[i];
-        const result = await importCustomer(row);
+        const result = await importCustomer(row, storeId);
         if (result.success) {
           success++;
         } else {
@@ -215,7 +223,8 @@ async function importData(rows: Record<string, string>[]): Promise<{
 
 async function importSaleOrder(
   orderId: string,
-  orderRows: Record<string, string>[]
+  orderRows: Record<string, string>[],
+  startRowIndex: number = 2
 ): Promise<{ success: boolean; error?: string }> {
   if (orderRows.length === 0) {
     return { success: false, error: "No rows provided for order" };
@@ -261,9 +270,11 @@ async function importSaleOrder(
       salePrice: number;
     }[] = [];
 
-    let errors = [];
+    const errors: Array<{ row: number; error?: string }> = [];
 
-    for (const row of orderRows) {
+    for (let i = 0; i < orderRows.length; i++) {
+      const row = orderRows[i];
+      const rowNum = startRowIndex + i;
       const productName = row["product"];
       const quantity = parseFloat(row["quantity"] || "0");
       const totalSaleItemPrice = parseFloat(
@@ -274,6 +285,7 @@ async function importSaleOrder(
 
       if (!productName) {
         errors.push({
+          row: rowNum,
           error: `Product name is required ${JSON.stringify(row)}`,
         });
         continue;
@@ -281,6 +293,7 @@ async function importSaleOrder(
 
       if (isNaN(quantity) || quantity <= 0) {
         errors.push({
+          row: rowNum,
           error: "Quantity must be a valid positive number",
         });
         continue;
@@ -299,7 +312,10 @@ async function importSaleOrder(
       );
 
       if (!product) {
-        errors.push({ error: `Product "${productName}" not found` });
+        errors.push({
+          row: rowNum,
+          error: `Product "${productName}" not found`,
+        });
         continue;
       }
 
@@ -343,7 +359,8 @@ async function importSaleOrder(
 }
 
 async function importProduct(
-  row: Record<string, string>
+  row: Record<string, string>,
+  storeId: number
 ): Promise<{ success: boolean; error?: string }> {
   const name = row["product"] || row["product name"] || row["name"];
   const source = row["source"] || row["source name"];
@@ -379,6 +396,7 @@ async function importProduct(
         name: {
           equals: name,
         },
+        storeId,
       },
     });
 
@@ -401,9 +419,11 @@ async function importProduct(
       sourceId = sourceRecord.id;
     }
 
-    const store = await prisma.store.findFirst();
+    const store = await prisma.store.findUnique({
+      where: { id: storeId },
+    });
     if (!store) {
-      return { success: false, error: "No store found to associate product" };
+      return { success: false, error: `Store with ID ${storeId} not found` };
     }
 
     // Create product
@@ -484,7 +504,8 @@ async function importProduct(
 }
 
 async function importCustomer(
-  row: Record<string, string>
+  row: Record<string, string>,
+  storeId: number
 ): Promise<{ success: boolean; error?: string }> {
   const name =
     row["name and surname"] ||
@@ -507,10 +528,18 @@ async function importCustomer(
   }
 
   try {
-    await prisma.customer.create({
+    const customer = await prisma.customer.create({
       data: {
         name,
         email,
+      },
+    });
+
+    // Add customer to the store
+    await prisma.customerStore.create({
+      data: {
+        customerId: customer.id,
+        storeId,
       },
     });
 
@@ -552,7 +581,8 @@ async function importSource(
 }
 
 async function importInventory(
-  row: Record<string, string>
+  row: Record<string, string>,
+  storeId: number
 ): Promise<{ success: boolean; error?: string }> {
   const productName =
     row["product"] || row["product name"] || row["name"] || row["item"];
@@ -588,7 +618,10 @@ async function importInventory(
 
   try {
     // Find product by name (case-insensitive search, ignoring quotes and whitespace)
-    const allProducts = await prisma.product.findMany();
+    // Only search in products from the specified store
+    const allProducts = await prisma.product.findMany({
+      where: { storeId },
+    });
     const normalizedInputName = productName
       .toLowerCase()
       .replace(/"/g, "")
@@ -599,7 +632,10 @@ async function importInventory(
     );
 
     if (!product) {
-      return { success: false, error: `Product "${productName}" not found` };
+      return {
+        success: false,
+        error: `Product "${productName}" not found in this store`,
+      };
     }
 
     // Create inventory received record

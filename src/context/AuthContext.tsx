@@ -2,17 +2,28 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+interface CustomerStore {
+  id: number;
+  storeManager: boolean;
+  store: {
+    id: number;
+    name: string;
+  };
+}
+
 interface CustomerData {
   id: number;
   name: string;
   email: string;
   isAdmin: boolean;
+  stores: CustomerStore[];
 }
 
 interface AuthContextType {
   customer: CustomerData | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isStoreManager: boolean;
   logout: () => void;
   refreshToken: () => void;
 }
@@ -60,12 +71,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isStoreManager = customer
+    ? customer.isAdmin || customer.stores.some((cs) => cs.storeManager)
+    : false;
+
   return (
     <AuthContext.Provider
       value={{
         customer,
         loading,
         isAuthenticated: customer !== null,
+        isStoreManager,
         logout,
         refreshToken: fetchCustomer,
       }}

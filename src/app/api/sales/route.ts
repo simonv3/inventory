@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getStoreIdFromRequest } from "@/lib/storeUtils";
 
 interface SaleItem {
   productId: string | number;
@@ -11,12 +12,23 @@ interface SaleItem {
 // GET all sales
 export async function GET(request: NextRequest) {
   try {
+    const storeId = getStoreIdFromRequest(request);
+
     const sales = await prisma.sale.findMany({
       include: {
         customer: true,
         items: { include: { product: true } },
       },
       orderBy: { saleDate: "desc" },
+      where: storeId
+        ? {
+            items: {
+              some: {
+                product: { storeId },
+              },
+            },
+          }
+        : {},
     });
     return NextResponse.json(sales);
   } catch (error) {

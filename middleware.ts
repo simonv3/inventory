@@ -4,8 +4,8 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const token = request.cookies.get("customerToken")?.value;
 
-  // Protect dashboard routes - require authentication
-  if (pathname.startsWith("/dashboard")) {
+  // Protect admin routes - require authentication
+  if (pathname.startsWith("/admin")) {
     if (!token) {
       // Redirect to login if not authenticated
       return NextResponse.redirect(new URL("/", request.url));

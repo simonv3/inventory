@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Button, Dialog, Input } from "@/components";
+import { Button, Dialog, Input, BulkImportDialog } from "@/components";
 import { Sale, Customer, Product } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { SaleTableRow } from "@/components/SaleTableRow";
 import SaleDialog from "@/components/SaleDialog";
+import { useStore } from "@/context/StoreContext";
 
 export interface SaleFormInputs {
   customerId: string;
@@ -15,6 +16,7 @@ export interface SaleFormInputs {
 }
 
 export default function SalesPage() {
+  const { currentStoreId, loading: storeLoading } = useStore();
   const [sales, setSales] = useState<Sale[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,12 +24,9 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
-  const [inlineEditData, setInlineEditData] = useState<Partial<Sale> | null>(
-    null
-  );
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const {
     register,
     handleSubmit,
@@ -47,20 +46,29 @@ export default function SalesPage() {
     name: "items",
   });
 
+  const loadData = async () => {
+    if (!currentStoreId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [sls, custs, prods] = await Promise.all([
+        fetch(`/api/sales?storeId=${currentStoreId}`).then((r) => r.json()),
+        fetch(`/api/customers?storeId=${currentStoreId}`).then((r) => r.json()),
+        fetch(`/api/products?storeId=${currentStoreId}`).then((r) => r.json()),
+      ]);
+      setSales(sls);
+      setCustomers(custs);
+      setProducts(prods);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([
-      fetch("/api/sales").then((r) => r.json()),
-      fetch("/api/customers").then((r) => r.json()),
-      fetch("/api/products").then((r) => r.json()),
-    ])
-      .then(([sls, custs, prods]) => {
-        setSales(sls);
-        console.log("custs", custs);
-        setCustomers(custs);
-        setProducts(prods);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    loadData();
+  }, [currentStoreId]);
 
   const handleOpenDialog = (sale?: Sale) => {
     if (sale) {
@@ -117,44 +125,6 @@ export default function SalesPage() {
     } catch (error) {
       console.error("Error saving sale:", error);
     }
-  };
-
-  const handleInlineEdit = (sale: Sale) => {
-    setInlineEditingId(sale.id);
-    setInlineEditData({ ...sale });
-  };
-
-  const handleInlineSave = async (saleId: number) => {
-    if (!inlineEditData) return;
-
-    try {
-      const res = await fetch(`/api/sales/${saleId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: inlineEditData.customerId,
-          markupPercent: inlineEditData.markupPercent,
-          items: (inlineEditData.items || []).map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-        }),
-      });
-
-      if (res.ok) {
-        const updatedSale = await res.json();
-        setSales((sls) => sls.map((s) => (s.id === saleId ? updatedSale : s)));
-        setInlineEditingId(null);
-        setInlineEditData(null);
-      }
-    } catch (error) {
-      console.error("Error saving sale:", error);
-    }
-  };
-
-  const handleInlineCancel = () => {
-    setInlineEditingId(null);
-    setInlineEditData(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -234,6 +204,8 @@ export default function SalesPage() {
     getSortIndicator,
   } = useSortableTable({
     data: filteredSales,
+    defaultSortKey: "customerId",
+    defaultDirection: "asc",
   });
 
   if (loading) return <div>Loading...</div>;
@@ -242,7 +214,15 @@ export default function SalesPage() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sales</h1>
-        <Button onClick={() => handleOpenDialog()}>+ New Sale</Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setImportDialogOpen(true)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Import CSV
+          </Button>
+          <Button onClick={() => handleOpenDialog()}>+ New Sale</Button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -371,6 +351,17 @@ export default function SalesPage() {
           onClose={() => setDialogOpen(false)}
         />
       </Dialog>
+
+      <BulkImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        storeId={currentStoreId}
+        onImportSuccess={() => {
+          setSales([]);
+          setLoading(true);
+          loadData();
+        }}
+      />
     </main>
   );
 }

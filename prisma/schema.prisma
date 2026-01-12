@@ -16,15 +16,16 @@ model CustomerType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customers Customer[]
+  customerStores CustomerStore[]
 }
 
 // Store table
 model Store {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  paymentLink String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   customers CustomerStore[]
   products  Product[]
@@ -32,33 +33,34 @@ model Store {
 
 // Junction table for Customer and Store (many-to-many)
 model CustomerStore {
-  id         Int      @id @default(autoincrement())
-  customerId Int
-  storeId    Int
-  createdAt  DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  customerId     Int
+  storeId        Int
+  storeManager   Boolean  @default(false)
+  markupPercent  Float    @default(5.0)
+  customerTypeId Int?
+  createdAt      DateTime @default(now())
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerType CustomerType? @relation(fields: [customerTypeId], references: [id], onDelete: SetNull)
 
   @@unique([customerId, storeId])
 }
 
 // Customers table
 model Customer {
-  id             Int       @id @default(autoincrement())
-  name           String
-  email          String    @unique
-  otpCode        String?
-  otpExpiresAt   DateTime?
-  customerTypeId Int?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  markupPercent  Float     @default(5.0)
-  isAdmin        Boolean   @default(false)
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  otpCode      String?
+  otpExpiresAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isAdmin      Boolean   @default(false)
 
-  customerType CustomerType?   @relation(fields: [customerTypeId], references: [id], onDelete: SetNull)
-  stores       CustomerStore[]
-  sales        Sale[]
+  stores CustomerStore[] // Many-to-many: which stores this customer has access to
+  sales  Sale[]
 }
 
 // Category table

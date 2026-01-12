@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { StoreSelector } from "./StoreSelector";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useStore } from "@/context/StoreContext";
 
 interface NavbarProps {
   onLogout?: () => void;
@@ -14,16 +15,17 @@ export function Navbar({ onLogout }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { customer, logout } = useAuth();
+  const { currentStoreId } = useStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const dropdownItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/dashboard/import", label: "Import" },
-    { href: "/dashboard/products", label: "Products" },
-    { href: "/dashboard/inventory", label: "Inventory" },
-    { href: "/dashboard/sales", label: "Sales" },
-    { href: "/dashboard/customers", label: "Customers" },
-    { href: "/dashboard/stores", label: "Stores" },
+    { href: "/admin", label: "Dashboard" },
+    { href: "/admin/import", label: "Import" },
+    { href: "/admin/products", label: "Products" },
+    { href: "/admin/inventory", label: "Inventory" },
+    { href: "/admin/sales", label: "Sales" },
+    { href: "/admin/customers", label: "Customers" },
+    { href: "/admin/stores", label: "Stores" },
   ];
 
   const handleLogout = async () => {
@@ -109,12 +111,17 @@ export function Navbar({ onLogout }: NavbarProps) {
                 Profile
               </Link>
               <Link
-                href="/shopping-cart"
+                href={currentStoreId ? `/${currentStoreId}/cart` : "#"}
                 className={`transition ${
-                  pathname === "/shopping-cart"
+                  pathname?.startsWith("/") && pathname?.includes("/cart")
                     ? "text-blue-400 font-semibold"
                     : "text-gray-300 hover:text-white"
                 }`}
+                onClick={(e) => {
+                  if (!currentStoreId) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 🛒 Cart
               </Link>

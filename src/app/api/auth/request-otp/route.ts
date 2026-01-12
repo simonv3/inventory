@@ -67,10 +67,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log("SMTP configured:", !!process.env.SMTP_HOST);
-
     // Send OTP via nodemailer if SMTP is configured
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD && process.env.SMTP_FROM_EMAIL) {
+    if (
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASSWORD &&
+      process.env.SMTP_FROM_EMAIL
+    ) {
       try {
         await transporter.sendMail({
           to: email,

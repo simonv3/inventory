@@ -17,8 +17,12 @@ export interface CustomerStore {
   id: number;
   customerId: number;
   storeId: number;
+  storeManager: boolean;
+  markupPercent: number;
+  customerTypeId?: number;
   customer?: Customer;
   store?: Store;
+  customerType?: CustomerType;
   createdAt: string;
 }
 
@@ -27,10 +31,7 @@ export interface Customer {
   isAdmin: boolean;
   name: string;
   email: string;
-  customerTypeId?: number;
-  customerType?: CustomerType;
   stores?: CustomerStore[];
-  markupPercent: number;
   createdAt: string;
   updatedAt: string;
 }

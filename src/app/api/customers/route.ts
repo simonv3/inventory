@@ -1,13 +1,47 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getStoreIdFromRequest } from "@/lib/storeUtils";
 
 // GET all customers
 export async function GET(request: NextRequest) {
   try {
-    const customers = await prisma.customer.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { customerType: true },
-    });
+    const storeId = getStoreIdFromRequest(request);
+
+    let customers;
+    if (storeId) {
+      // Get customers associated with this store
+      customers = await prisma.customer.findMany({
+        where: {
+          stores: {
+            some: {
+              storeId,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+          stores: {
+            include: {
+              store: true,
+              customerType: true,
+            },
+          },
+        },
+      });
+    } else {
+      // Get all customers (no store filter)
+      customers = await prisma.customer.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          stores: {
+            include: {
+              store: true,
+              customerType: true,
+            },
+          },
+        },
+      });
+    }
 
     return NextResponse.json(customers);
   } catch (error) {
@@ -23,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, markupPercent = 5.0, customerTypeId } = body;
+    const { name, email } = body;
 
     if (!name || !email) {
       return NextResponse.json(
@@ -36,10 +70,15 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
-        markupPercent,
-        ...(customerTypeId && { customerTypeId: parseInt(customerTypeId) }),
       },
-      include: { customerType: true },
+      include: {
+        stores: {
+          include: {
+            store: true,
+            customerType: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(customer, { status: 201 });

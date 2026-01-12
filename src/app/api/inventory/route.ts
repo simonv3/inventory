@@ -1,12 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getStoreIdFromRequest } from "@/lib/storeUtils";
 
 // GET all inventory received
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const storeId = getStoreIdFromRequest(request);
+
     const inventory = await prisma.inventoryReceived.findMany({
       include: { product: true },
       orderBy: { receivedDate: "desc" },
+      where: storeId ? { product: { storeId } } : {},
     });
     return NextResponse.json(inventory);
   } catch (error) {
