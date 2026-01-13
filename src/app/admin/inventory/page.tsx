@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Dialog, Input, Select, BulkImportDialog } from "@/components";
+import { Button, Dialog, Input, Select, ImportCsvButton } from "@/components";
 import { InventoryReceived, Product } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
@@ -11,6 +11,7 @@ export default function InventoryPage() {
   const { currentStoreId, loading: storeLoading } = useStore();
   const [inventory, setInventory] = useState<InventoryReceived[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [sources, setSources] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -18,7 +19,15 @@ export default function InventoryPage() {
   const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
   const [inlineEditData, setInlineEditData] =
     useState<Partial<InventoryReceived> | null>(null);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [newProductDialogOpen, setNewProductDialogOpen] = useState(false);
+  const [newProductData, setNewProductData] = useState({
+    name: "",
+    sku: "",
+    unitOfMeasurement: "",
+    pricePerUnit: "",
+    minimumStock: "",
+    sourceId: "",
+  });
   const { fetchData } = useApiWithToast();
   const [formData, setFormData] = useState({
     productId: "",
@@ -33,14 +42,16 @@ export default function InventoryPage() {
       return;
     }
 
-    const [inv, prods] = await Promise.all([
+    const [inv, prods, src] = await Promise.all([
       fetchData<InventoryReceived[]>(
         `/api/inventory?storeId=${currentStoreId}`
       ),
       fetchData<Product[]>(`/api/products?storeId=${currentStoreId}`),
+      fetchData<any[]>("/api/sources"),
     ]);
     if (inv) setInventory(inv);
     if (prods) setProducts(prods);
+    if (src) setSources(src);
     setLoading(false);
   };
 
@@ -142,6 +153,46 @@ export default function InventoryPage() {
     setInlineEditData(null);
   };
 
+  const handleCreateProduct = async () => {
+    if (!currentStoreId) return;
+
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newProductData,
+          storeId: currentStoreId,
+          categoryIds: [],
+          isOrganic: false,
+          showInStorefront: true,
+          pricePerUnit: parseFloat(newProductData.pricePerUnit),
+          minimumStock: parseInt(newProductData.minimumStock),
+          sourceId: newProductData.sourceId
+            ? parseInt(newProductData.sourceId)
+            : null,
+        }),
+      });
+
+      if (res.ok) {
+        const newProduct = await res.json();
+        setProducts((prods) => [newProduct, ...prods]);
+        setFormData({ ...formData, productId: newProduct.id.toString() });
+        setNewProductDialogOpen(false);
+        setNewProductData({
+          name: "",
+          sku: "",
+          unitOfMeasurement: "",
+          pricePerUnit: "",
+          minimumStock: "",
+          sourceId: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating product:", error);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure?")) {
       try {
@@ -222,8 +273,8 @@ export default function InventoryPage() {
     getSortIndicator,
   } = useSortableTable({
     data: filteredInventory,
-    defaultSortKey: "productId",
-    defaultDirection: "asc",
+    defaultSortKey: "receivedDate",
+    defaultDirection: "desc",
   });
 
   if (loading) return <div>Loading...</div>;
@@ -233,12 +284,14 @@ export default function InventoryPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Inventory Received</h1>
         <div className="flex gap-2">
-          <Button
-            onClick={() => setImportDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Import CSV
-          </Button>
+          <ImportCsvButton
+            storeId={currentStoreId}
+            onImportSuccess={() => {
+              setInventory([]);
+              setLoading(true);
+              loadData();
+            }}
+          />
           <Button onClick={() => handleOpenDialog()}>+ New Entry</Button>
         </div>
       </div>
@@ -463,18 +516,35 @@ export default function InventoryPage() {
         title={editingId ? "Edit Inventory Entry" : "New Inventory Entry"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Select
-            label="Product"
-            value={formData.productId}
-            onChange={(e) =>
-              setFormData({ ...formData, productId: e.target.value })
-            }
-            options={products.map((p) => ({
-              value: p.id,
-              label: p.name,
-            }))}
-            required
-          />
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Product <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={formData.productId}
+                onChange={(e) =>
+                  setFormData({ ...formData, productId: e.target.value })
+                }
+                required
+                className="w-full w-150 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select a product</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                onClick={() => setNewProductDialogOpen(true)}
+                variant="secondary"
+              >
+                + New
+              </Button>
+            </div>
+          </div>
           <Input
             label="Quantity"
             type="number"
@@ -510,16 +580,96 @@ export default function InventoryPage() {
         </form>
       </Dialog>
 
-      <BulkImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        storeId={currentStoreId}
-        onImportSuccess={() => {
-          setInventory([]);
-          setLoading(true);
-          loadData();
-        }}
-      />
+      <Dialog
+        open={newProductDialogOpen}
+        onOpenChange={setNewProductDialogOpen}
+        title="New Product"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateProduct();
+          }}
+          className="space-y-4"
+        >
+          <Input
+            label="Product Name"
+            value={newProductData.name}
+            onChange={(e) =>
+              setNewProductData({ ...newProductData, name: e.target.value })
+            }
+            required
+          />
+          <Input
+            label="SKU"
+            value={newProductData.sku}
+            onChange={(e) =>
+              setNewProductData({ ...newProductData, sku: e.target.value })
+            }
+            required
+          />
+          <Input
+            label="Unit of Measurement"
+            value={newProductData.unitOfMeasurement}
+            onChange={(e) =>
+              setNewProductData({
+                ...newProductData,
+                unitOfMeasurement: e.target.value,
+              })
+            }
+            required
+          />
+          <Input
+            label="Price Per Unit"
+            type="number"
+            step="0.01"
+            value={newProductData.pricePerUnit}
+            onChange={(e) =>
+              setNewProductData({
+                ...newProductData,
+                pricePerUnit: e.target.value,
+              })
+            }
+            required
+          />
+          <Input
+            label="Minimum Stock"
+            type="number"
+            value={newProductData.minimumStock}
+            onChange={(e) =>
+              setNewProductData({
+                ...newProductData,
+                minimumStock: e.target.value,
+              })
+            }
+            required
+          />
+          <Select
+            label="Source (optional)"
+            value={newProductData.sourceId}
+            onChange={(e) =>
+              setNewProductData({ ...newProductData, sourceId: e.target.value })
+            }
+            options={[
+              { value: "", label: "Select a source" },
+              ...sources.map((s) => ({
+                value: s.id,
+                label: s.name,
+              })),
+            ]}
+          />
+          <div className="flex gap-2">
+            <Button type="submit">Create Product</Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setNewProductDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </main>
   );
 }

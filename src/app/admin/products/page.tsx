@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Dialog, Input, Select, BulkImportDialog } from "@/components";
+import { Button, Dialog, Input, Select, ImportCsvButton } from "@/components";
 import { Product, Category, Source } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
@@ -38,13 +38,11 @@ export default function ProductsPage() {
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { fetchData } = useApiWithToast();
   const {
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<ProductFormInputs>({
     defaultValues: {
@@ -343,12 +341,14 @@ export default function ProductsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
         <div className="flex gap-2">
-          <Button
-            onClick={() => setImportDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Import CSV
-          </Button>
+          <ImportCsvButton
+            storeId={currentStoreId}
+            onImportSuccess={() => {
+              setProducts([]);
+              setLoading(true);
+              loadData();
+            }}
+          />
           <Button onClick={() => handleOpenDialog()}>+ New Product</Button>
         </div>
       </div>
@@ -924,17 +924,6 @@ export default function ProductsPage() {
           </div>
         </form>
       </Dialog>
-
-      <BulkImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        storeId={currentStoreId}
-        onImportSuccess={() => {
-          setProducts([]);
-          setLoading(true);
-          loadData();
-        }}
-      />
     </main>
   );
 }

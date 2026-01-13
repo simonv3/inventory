@@ -25,20 +25,10 @@ export default function Home() {
   }
 
   return (
-    <>
-      <OTPLoginForm
-        title="Green's and Beans Grocery"
-        redirectPath="/customer/portal"
-        onLoginSuccess={refreshToken}
-      />
-      <div className="fixed bottom-8 left-0 right-0 text-center">
-        <Link
-          href="/admin"
-          className="text-sm text-blue-600 hover:text-blue-500 font-medium"
-        >
-          Admin Dashboard
-        </Link>
-      </div>
-    </>
+    <OTPLoginForm
+      title="Green's and Beans Grocery"
+      redirectPath="/customer/portal"
+      onLoginSuccess={refreshToken}
+    />
   );
 }

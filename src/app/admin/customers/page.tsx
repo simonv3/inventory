@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Dialog, Input, BulkImportDialog } from "@/components";
+import { Button, Dialog, Input, ImportCsvButton } from "@/components";
 import { CustomerRow } from "@/components/CustomerRow";
 import { Customer } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
@@ -24,7 +24,6 @@ export default function CustomersPage() {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<number>>(
     new Set()
   );
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { fetchData } = useApiWithToast();
   const {
     register,
@@ -176,12 +175,14 @@ export default function CustomersPage() {
               Delete Selected ({selectedCustomerIds.size})
             </Button>
           )}
-          <Button
-            onClick={() => setImportDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            Import CSV
-          </Button>
+          <ImportCsvButton
+            storeId={currentStoreId}
+            onImportSuccess={() => {
+              setCustomers([]);
+              setLoading(true);
+              loadData();
+            }}
+          />
           <Button onClick={() => handleOpenDialog()}>+ New Customer</Button>
         </div>
       </div>
@@ -317,17 +318,6 @@ export default function CustomersPage() {
           </div>
         </form>
       </Dialog>
-
-      <BulkImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        storeId={currentStoreId}
-        onImportSuccess={() => {
-          setCustomers([]);
-          setLoading(true);
-          loadData();
-        }}
-      />
     </main>
   );
 }
