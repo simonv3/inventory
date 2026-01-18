@@ -8,19 +8,24 @@ import {
   Input,
   ImportCsvButton,
   LoadingSkeleton,
-  AdminOnlyGuard,
 } from "@/components";
 import { CustomerRow } from "@/components/CustomerRow";
 import { Customer } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
+import { useAuth } from "@/context/AuthContext";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 
 interface CustomerFormInputs {
   name: string;
   email: string;
 }
 
-function GlobalCustomersPage() {
+export default function CustomersPage() {
+  const { customer } = useAuth();
+  const params = useParams();
+  const storeId = parseInt(params.storeId as string);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -43,7 +48,14 @@ function GlobalCustomersPage() {
   });
 
   const loadData = async () => {
-    const customersList = await fetchData<Customer[]>("/api/customers");
+    if (!storeId) {
+      setLoading(false);
+      return;
+    }
+
+    const customersList = await fetchData<Customer[]>(
+      `/api/customers?storeId=${storeId}`,
+    );
     if (customersList) setCustomers(customersList);
     setLoading(false);
   };
@@ -51,7 +63,7 @@ function GlobalCustomersPage() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storeId]);
 
   const handleOpenDialog = (customer?: Customer) => {
     if (customer) {
@@ -74,15 +86,22 @@ function GlobalCustomersPage() {
     const url = editingId ? `/api/customers/${editingId}` : "/api/customers";
     const method = editingId ? "PUT" : "POST";
 
+    const body: any = {
+      name: data.name,
+      email: data.email,
+    };
+
+    // Add storeId for new customers
+    if (!editingId && storeId) {
+      body.storeId = storeId;
+    }
+
     const result = await fetchData(
       url,
       {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-        }),
+        body: JSON.stringify(body),
       },
       true,
       `Customer ${editingId ? "updated" : "created"} successfully`,
@@ -91,7 +110,9 @@ function GlobalCustomersPage() {
     if (result) {
       setDialogOpen(false);
       reset();
-      const customersList = await fetchData<Customer[]>("/api/customers");
+      const customersList = await fetchData<Customer[]>(
+        `/api/customers?storeId=${storeId}`,
+      );
       if (customersList) setCustomers(customersList);
     }
   };
@@ -160,10 +181,20 @@ function GlobalCustomersPage() {
 
   if (loading) return <LoadingSkeleton />;
 
-  const content = (
+  return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Customers</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Customers</h1>
+          {customer?.isAdmin && (
+            <Link
+              href="/admin/customers"
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              View All Customers
+            </Link>
+          )}
+        </div>
         <div className="flex gap-2">
           {selectedCustomerIds.size > 0 && (
             <Button
@@ -173,6 +204,14 @@ function GlobalCustomersPage() {
               Delete Selected ({selectedCustomerIds.size})
             </Button>
           )}
+          <ImportCsvButton
+            storeId={storeId}
+            onImportSuccess={() => {
+              setCustomers([]);
+              setLoading(true);
+              loadData();
+            }}
+          />
           <Button onClick={() => handleOpenDialog()}>+ New Customer</Button>
         </div>
       </div>
@@ -256,6 +295,7 @@ function GlobalCustomersPage() {
                   selectedCustomerIds={selectedCustomerIds}
                   toggleSelectCustomer={toggleSelectCustomer}
                   setCustomers={setCustomers}
+                  currentStoreId={storeId}
                   fetchData={fetchData}
                 />
               ))
@@ -309,10 +349,4 @@ function GlobalCustomersPage() {
       </Dialog>
     </main>
   );
-
-  return <AdminOnlyGuard>{content}</AdminOnlyGuard>;
-}
-
-export default function GlobalCustomersPageWithGuard() {
-  return <GlobalCustomersPage />;
 }

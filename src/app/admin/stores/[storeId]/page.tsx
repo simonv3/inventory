@@ -2,32 +2,42 @@
 
 import { useEffect, useState } from "react";
 import { Product, Customer, InventoryReceived, Sale } from "@/types";
-import { AdminGuard } from "@/components/AdminGuard";
+import { useStore } from "@/context/StoreContext";
+import { useParams } from "next/navigation";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 
-export default function AdminDashboard() {
+export default function StoreDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<InventoryReceived[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const storeId = parseInt(params.storeId as string);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        const headers = {
+          "x-store-id": storeId.toString(),
+        };
+
         const [productsData, customersData, inventoryData, salesData] =
           await Promise.all([
             fetch("/api/products", {
               credentials: "include",
+              headers,
             }).then((r) => r.json()),
-            fetch("/api/customers", {
+            fetch(`/api/customers?storeId=${storeId}`, {
               credentials: "include",
             }).then((r) => r.json()),
             fetch("/api/inventory", {
               credentials: "include",
+              headers,
             }).then((r) => r.json()),
             fetch("/api/sales", {
               credentials: "include",
+              headers,
             }).then((r) => r.json()),
           ]);
 
@@ -41,7 +51,7 @@ export default function AdminDashboard() {
     };
 
     loadData();
-  }, []);
+  }, [storeId]);
 
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalPrice, 0);
   const averagePurchase = sales.length > 0 ? totalRevenue / sales.length : 0;
@@ -79,9 +89,9 @@ export default function AdminDashboard() {
     return <LoadingSkeleton />;
   }
 
-  const content = (
+  return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-8">Store Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -235,6 +245,4 @@ export default function AdminDashboard() {
       </div>
     </main>
   );
-
-  return <AdminGuard>{content}</AdminGuard>;
 }

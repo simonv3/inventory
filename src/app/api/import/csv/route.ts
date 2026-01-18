@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (lines.length < 2) {
       return NextResponse.json(
         { error: "CSV must have headers and at least one data row" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     console.error("Error importing CSV:", error);
     return NextResponse.json(
       { error: "Failed to import CSV: " + (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,7 +82,7 @@ function parseCSVLine(line: string): string[] {
 
 async function importData(
   rows: Record<string, string>[],
-  storeId: number
+  storeId: number,
 ): Promise<{
   success: number;
   failed: number;
@@ -108,14 +108,14 @@ async function importData(
   } else if (
     columns.some(
       (c) =>
-        c.includes("customer") || c.includes("email") || c.includes("contact")
+        c.includes("customer") || c.includes("email") || c.includes("contact"),
     )
   ) {
     importType = "customers";
   } else if (
     columns.some(
       (c) =>
-        c.includes("source") || c.includes("supplier") || c.includes("vendor")
+        c.includes("source") || c.includes("supplier") || c.includes("vendor"),
     )
   ) {
     importType = "sources";
@@ -224,7 +224,7 @@ async function importData(
 async function importSaleOrder(
   orderId: string,
   orderRows: Record<string, string>[],
-  startRowIndex: number = 2
+  startRowIndex: number = 2,
 ): Promise<{ success: boolean; error?: string }> {
   if (orderRows.length === 0) {
     return { success: false, error: "No rows provided for order" };
@@ -278,7 +278,7 @@ async function importSaleOrder(
       const productName = row["product"];
       const quantity = parseFloat(row["quantity"] || "0");
       const totalSaleItemPrice = parseFloat(
-        (row["total order price"] || "0").replace(/[^0-9.-]+/g, "")
+        (row["total order price"] || "0").replace(/[^0-9.-]+/g, ""),
       );
 
       totalOrderPrice += totalSaleItemPrice;
@@ -308,7 +308,7 @@ async function importSaleOrder(
       const product = allProducts.find(
         (p) =>
           p.name.toLowerCase().replace(/"/g, "").trim() ===
-          normalizedProductName
+          normalizedProductName,
       );
 
       if (!product) {
@@ -360,17 +360,17 @@ async function importSaleOrder(
 
 async function importProduct(
   row: Record<string, string>,
-  storeId: number
+  storeId: number,
 ): Promise<{ success: boolean; error?: string }> {
   const name = row["product"] || row["product name"] || row["name"];
   const source = row["source"] || row["source name"];
   const categoryNames = row["category"];
   const unitOfMeasurement = row["unit"] || row["uom"] || "units";
   const pricePerUnit = parseFloat(
-    (row["price per unit"] || row["price"] || "0").replace(/[^0-9.-]+/g, "")
+    (row["price per unit"] || row["price"] || "0").replace(/[^0-9.-]+/g, ""),
   );
   const minimumStock = parseInt(
-    row["minimum to stock"] || row["minimum stock"] || row["min stock"] || "0"
+    row["minimum to stock"] || row["minimum stock"] || row["min stock"] || "0",
   );
   const isOrganic =
     (row["is organic"] || row["organic"] || "false").toLowerCase() ===
@@ -466,7 +466,7 @@ async function importProduct(
 
         const existingNames = existingCategories.map((c) => c.name);
         const missingNames = categoryList.filter(
-          (n) => !existingNames.includes(n)
+          (n) => !existingNames.includes(n),
         );
 
         // Create missing categories
@@ -505,7 +505,7 @@ async function importProduct(
 
 async function importCustomer(
   row: Record<string, string>,
-  storeId: number
+  storeId: number,
 ): Promise<{ success: boolean; error?: string }> {
   const name =
     row["name and surname"] ||
@@ -554,7 +554,7 @@ async function importCustomer(
 }
 
 async function importSource(
-  row: Record<string, string>
+  row: Record<string, string>,
 ): Promise<{ success: boolean; error?: string }> {
   const name =
     row["source name"] || row["name"] || row["source"] || row["supplier"];
@@ -582,7 +582,7 @@ async function importSource(
 
 async function importInventory(
   row: Record<string, string>,
-  storeId: number
+  storeId: number,
 ): Promise<{ success: boolean; error?: string }> {
   const productName =
     row["product"] || row["product name"] || row["name"] || row["item"];
@@ -591,7 +591,7 @@ async function importInventory(
       row["quantity received"] ||
       row["qty"] ||
       row["amount"] ||
-      "0"
+      "0",
   );
   const dateReceived =
     row["date received"] ||
@@ -628,7 +628,7 @@ async function importInventory(
       .trim();
     const product = allProducts.find(
       (p) =>
-        p.name.toLowerCase().replace(/"/g, "").trim() === normalizedInputName
+        p.name.toLowerCase().replace(/"/g, "").trim() === normalizedInputName,
     );
 
     if (!product) {

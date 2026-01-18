@@ -18,15 +18,29 @@ export function Navbar({ onLogout }: NavbarProps) {
   const { currentStoreId } = useStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const dropdownItems = [
-    { href: "/admin", label: "Dashboard" },
+  const dropdownItems = (storeId: number | null) => [
+    {
+      href: storeId ? `/admin/stores/${storeId}` : "/admin",
+      label: "Dashboard",
+    },
     { href: "/admin/import", label: "Import", isAdminOnly: true },
-    { href: "/admin/products", label: "Products" },
-    { href: "/admin/inventory", label: "Inventory" },
-    { href: "/admin/sales", label: "Sales" },
-    { href: "/admin/customers", label: "Customers" },
+    {
+      href: storeId ? `/admin/stores/${storeId}/products` : "/admin/products",
+      label: "Products",
+    },
+    {
+      href: storeId ? `/admin/stores/${storeId}/inventory` : "/admin/inventory",
+      label: "Inventory",
+    },
+    {
+      href: storeId ? `/admin/stores/${storeId}/sales` : "/admin/sales",
+      label: "Sales",
+    },
+    {
+      href: storeId ? `/admin/stores/${storeId}/customers` : "/admin/customers",
+      label: "Customers",
+    },
     { href: "/admin/stores", label: "Stores", isAdminOnly: true },
-    { href: "/admin/login-as", label: "Login As", isAdminOnly: true },
   ];
 
   const handleLogout = async () => {
@@ -44,12 +58,14 @@ export function Navbar({ onLogout }: NavbarProps) {
   const customerCanSeeMenu =
     customer?.isAdmin || customer?.stores.find((s) => s.storeManager);
 
+  const currentDropdownItems = dropdownItems(currentStoreId);
+
   return (
     <nav className="bg-slate-800 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href={"/"} className="text-2xl font-bold">
-            📦 Inventory
+            Inventory
           </Link>
           <div className="flex gap-8 items-center">
             <div className="relative">
@@ -58,7 +74,9 @@ export function Navbar({ onLogout }: NavbarProps) {
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className={`transition flex items-center gap-1 ${
-                      dropdownItems.some((item) => pathname === item.href)
+                      currentDropdownItems.some(
+                        (item) => pathname === item.href,
+                      )
                         ? "text-blue-400 font-semibold"
                         : "text-gray-300 hover:text-white"
                     }`}
@@ -82,9 +100,9 @@ export function Navbar({ onLogout }: NavbarProps) {
                   </button>
                   {isDropdownOpen && (
                     <div className="absolute top-full mt-2 left-0 bg-slate-700 rounded shadow-lg py-2 min-w-max z-50">
-                      {dropdownItems
+                      {currentDropdownItems
                         .filter(
-                          (item) => !item.isAdminOnly || customer?.isAdmin
+                          (item) => !item.isAdminOnly || customer?.isAdmin,
                         )
                         .map((item) => (
                           <Link
@@ -131,7 +149,7 @@ export function Navbar({ onLogout }: NavbarProps) {
                   }
                 }}
               >
-                🛒 Cart
+                Cart
               </Link>
               <button
                 onClick={handleLogout}

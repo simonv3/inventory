@@ -9,12 +9,11 @@ import {
   Select,
   ImportCsvButton,
   LoadingSkeleton,
-  AdminOnlyGuard,
 } from "@/components";
 import { Product, Category, Source } from "@/types";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import { useApiWithToast } from "@/lib/useApiWithToast";
-import { useStore } from "@/context/StoreContext";
+import { useParams } from "next/navigation";
 
 interface ProductFormInputs {
   name: string;
@@ -28,8 +27,9 @@ interface ProductFormInputs {
   categoryIds: number[];
 }
 
-function GlobalProductsPage() {
-  const { currentStoreId, loading: storeLoading } = useStore();
+export default function ProductsPage() {
+  const params = useParams();
+  const storeId = parseInt(params.storeId as string);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
@@ -67,7 +67,7 @@ function GlobalProductsPage() {
   });
 
   const loadData = async () => {
-    if (!currentStoreId) {
+    if (!storeId) {
       setLoading(false);
       return;
     }
@@ -75,7 +75,7 @@ function GlobalProductsPage() {
     await Promise.all([
       (async () => {
         const data = await fetchData<Product[]>(
-          `/api/products?storeId=${currentStoreId}`,
+          `/api/products?storeId=${storeId}`,
         );
         if (data) setProducts(data);
       })(),
@@ -94,7 +94,7 @@ function GlobalProductsPage() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStoreId]);
+  }, [storeId]);
 
   const handleOpenDialog = (product?: Product) => {
     if (product) {
@@ -148,7 +148,9 @@ function GlobalProductsPage() {
     if (result) {
       setDialogOpen(false);
       reset();
-      const products = await fetchData<Product[]>("/api/products");
+      const products = await fetchData<Product[]>(
+        `/api/products?storeId=${storeId}`,
+      );
       if (products) setProducts(products);
     }
   };
@@ -187,7 +189,9 @@ function GlobalProductsPage() {
     if (result) {
       setInlineEditingId(null);
       setInlineEditData(null);
-      const products = await fetchData<Product[]>("/api/products");
+      const products = await fetchData<Product[]>(
+        `/api/products?storeId=${storeId}`,
+      );
       if (products) setProducts(products);
     }
   };
@@ -344,13 +348,13 @@ function GlobalProductsPage() {
 
   if (loading) return <LoadingSkeleton />;
 
-  const content = (
+  return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Products</h1>
         <div className="flex gap-2">
           <ImportCsvButton
-            storeId={currentStoreId}
+            storeId={storeId}
             onImportSuccess={() => {
               setProducts([]);
               setLoading(true);
@@ -934,10 +938,4 @@ function GlobalProductsPage() {
       </Dialog>
     </main>
   );
-
-  return <AdminOnlyGuard>{content}</AdminOnlyGuard>;
-}
-
-export default function GlobalProductsPageWithGuard() {
-  return <GlobalProductsPage />;
 }

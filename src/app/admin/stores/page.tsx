@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/UI";
+import { AdminOnlyGuard } from "@/components/AdminOnlyGuard";
 import { useStore } from "@/context/StoreContext";
 
 interface Store {
@@ -10,7 +11,7 @@ interface Store {
   createdAt: string;
 }
 
-export default function StoresPage() {
+function StoresPageContent() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddingStore, setIsAddingStore] = useState(false);
@@ -141,7 +142,7 @@ export default function StoresPage() {
     );
   }
 
-  return (
+  const content = (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Store Management</h1>
@@ -288,4 +289,10 @@ export default function StoresPage() {
       </div>
     </main>
   );
+
+  return <AdminOnlyGuard>{content}</AdminOnlyGuard>;
+}
+
+export default function StoresPage() {
+  return <StoresPageContent />;
 }

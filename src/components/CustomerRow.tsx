@@ -1,5 +1,9 @@
+"use client";
+
 import { useState } from "react";
 import { Customer } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface CustomerRowProps {
   customer: Customer;
@@ -11,7 +15,7 @@ interface CustomerRowProps {
     url: string,
     options?: RequestInit,
     showToast?: boolean,
-    message?: string
+    message?: string,
   ) => Promise<Customer[] | any>;
 }
 
@@ -25,6 +29,8 @@ export function CustomerRow({
 }: CustomerRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Customer> | null>(null);
+  const { customer: authCustomer } = useAuth();
+  const router = useRouter();
 
   const handleInlineEdit = (customer: Customer) => {
     setIsEditing(true);
@@ -46,13 +52,13 @@ export function CustomerRow({
         }),
       },
       true,
-      "Customer updated successfully"
+      "Customer updated successfully",
     );
 
     // Save markup percentage if current store is selected
     if (result && currentStoreId && editData.stores) {
       const customerStore = editData.stores.find(
-        (cs) => cs.storeId === currentStoreId
+        (cs) => cs.storeId === currentStoreId,
       );
       if (customerStore) {
         await fetchData(
@@ -64,7 +70,7 @@ export function CustomerRow({
               markupPercent: customerStore.markupPercent,
             }),
           },
-          false
+          false,
         );
       }
     }
@@ -95,10 +101,30 @@ export function CustomerRow({
     }
   };
 
+  const handleLoginAs = async (customerId: number) => {
+    try {
+      const res = await fetch("/api/auth/login-as", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId }),
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        router.push("/customer/portal");
+      } else {
+        alert("Failed to login as customer");
+      }
+    } catch (error) {
+      console.error("Error logging in as customer:", error);
+      alert("Error logging in as customer");
+    }
+  };
+
   const handleToggleStoreManager = async (
     customerId: number,
     storeId: number,
-    isManager: boolean
+    isManager: boolean,
   ) => {
     try {
       const res = await fetch(
@@ -107,7 +133,7 @@ export function CustomerRow({
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ storeManager: isManager }),
-        }
+        },
       );
 
       if (res.ok) {
@@ -126,7 +152,7 @@ export function CustomerRow({
               };
             }
             return c;
-          })
+          }),
         );
       } else {
         alert("Failed to update store manager status");
@@ -183,12 +209,12 @@ export function CustomerRow({
               <button
                 onClick={() => {
                   const currentIsManager = customer.stores?.find(
-                    (cs) => cs.storeId === currentStoreId
+                    (cs) => cs.storeId === currentStoreId,
                   )?.storeManager;
                   handleToggleStoreManager(
                     customer.id,
                     currentStoreId,
-                    !currentIsManager
+                    !currentIsManager,
                   );
                 }}
                 className={`px-2 py-1 rounded text-sm font-medium transition ${
@@ -277,12 +303,12 @@ export function CustomerRow({
               <button
                 onClick={() => {
                   const currentIsManager = customer.stores?.find(
-                    (cs) => cs.storeId === currentStoreId
+                    (cs) => cs.storeId === currentStoreId,
                   )?.storeManager;
                   handleToggleStoreManager(
                     customer.id,
                     currentStoreId,
-                    !currentIsManager
+                    !currentIsManager,
                   );
                 }}
                 className={`px-2 py-1 rounded text-sm font-medium transition ${
@@ -305,8 +331,8 @@ export function CustomerRow({
           </td>{" "}
           <td className="border border-gray-300 px-4 py-2">
             {currentStoreId
-              ? customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                  ?.markupPercent ?? "—"
+              ? (customer.stores?.find((cs) => cs.storeId === currentStoreId)
+                  ?.markupPercent ?? "—")
               : "—"}
           </td>
           <td className="border border-gray-300 px-4 py-2">
@@ -325,6 +351,14 @@ export function CustomerRow({
               >
                 Edit
               </button>
+              {authCustomer?.isAdmin && (
+                <button
+                  onClick={() => handleLoginAs(customer.id)}
+                  className="text-purple-600 hover:text-purple-800 font-medium"
+                >
+                  Login As
+                </button>
+              )}
               <button
                 onClick={() => handleDelete(customer.id)}
                 className="text-red-600 hover:text-red-800 font-medium"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button } from "@/components";
+import { Button, AdminOnlyGuard } from "@/components";
 import { useStore } from "@/context/StoreContext";
 
 interface ImportResult {
@@ -11,7 +11,7 @@ interface ImportResult {
   errors: Array<{ row: number; error?: string }>;
 }
 
-export default function ImportPage() {
+function ImportPageContent() {
   const { currentStoreId, stores, loading: storeLoading } = useStore();
   const currentStore = stores.find((s) => s.id === currentStoreId);
   const [file, setFile] = useState<File | null>(null);
@@ -76,7 +76,7 @@ export default function ImportPage() {
     }
   };
 
-  return (
+  const content = (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold mb-6">Import Data</h1>
 
@@ -163,7 +163,7 @@ export default function ImportPage() {
                       <li key={idx}>
                         Row {err.row}: {err.error}
                       </li>
-                    )
+                    ),
                   )}
                 </ul>
               </div>
@@ -238,4 +238,10 @@ Bread,75,2025-12-10,Local bakery`}
       </div>
     </main>
   );
+
+  return <AdminOnlyGuard>{content}</AdminOnlyGuard>;
+}
+
+export default function ImportPage() {
+  return <ImportPageContent />;
 }

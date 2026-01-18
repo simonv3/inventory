@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(
       { error: "Failed to fetch customers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -57,12 +57,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email } = body;
+    const { name, email, storeId } = body;
+    const currentStoreId = getStoreIdFromRequest(request);
 
     if (!name || !email) {
       return NextResponse.json(
         { error: "Name and email are required" },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    // Use provided storeId or fall back to the store from the request context
+    const targetStoreId = storeId || currentStoreId;
+
+    if (!targetStoreId) {
+      return NextResponse.json(
+        { error: "No store context available" },
+        { status: 400 },
       );
     }
 
@@ -70,6 +81,12 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
+        stores: {
+          create: {
+            storeId: targetStoreId,
+            storeManager: false,
+          },
+        },
       },
       include: {
         stores: {
@@ -87,12 +104,12 @@ export async function POST(request: NextRequest) {
     if (err?.code === "P2002") {
       return NextResponse.json(
         { error: "Email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
       { error: "Failed to create customer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -106,7 +123,7 @@ export async function DELETE(request: NextRequest) {
     if (!Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
         { error: "ids must be a non-empty array" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -123,7 +140,7 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting customers:", error);
     return NextResponse.json(
       { error: "Failed to delete customers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
