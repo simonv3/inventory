@@ -1,29 +1,37 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET all stores for a customer
+// GET customer with all their stores
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
     const { customerId } = await params;
-    const customerStores = await prisma.customer.findFirst({
+    const customer = await prisma.customer.findFirst({
       where: { id: parseInt(customerId) },
+      include: {
+        stores: {
+          include: {
+            store: true,
+            customerType: true,
+          },
+        },
+      },
     });
 
-    if (!customerStores) {
+    if (!customer) {
       return NextResponse.json(
         { error: "Customer not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(customerStores);
+    return NextResponse.json(customer);
   } catch (error) {
-    console.error("Error fetching customer stores:", error);
+    console.error("Error fetching customer:", error);
     return NextResponse.json(
-      { error: "Failed to fetch customer stores" },
+      { error: "Failed to fetch customer" },
       { status: 500 }
     );
   }

@@ -7,3 +7,4 @@ export { ImportCsvButton } from "./ImportCsvButton";
 export { Dialog, Button, Input, Select, Table } from "./UI";
 export { default as BulkImportDialog } from "./BulkImportDialog";
 export { LoadingSkeleton } from "./LoadingSkeleton";
+export { StoresDialog } from "./StoresDialog";

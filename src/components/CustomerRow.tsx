@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Customer } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { StoresDialog } from "./StoresDialog";
 
 interface CustomerRowProps {
   customer: Customer;
@@ -29,6 +30,7 @@ export function CustomerRow({
 }: CustomerRowProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Customer> | null>(null);
+  const [isStoresDialogOpen, setIsStoresDialogOpen] = useState(false);
   const { customer: authCustomer } = useAuth();
   const router = useRouter();
 
@@ -161,6 +163,12 @@ export function CustomerRow({
       console.error("Error updating store manager:", error);
       alert("Error updating store manager");
     }
+  };
+
+  const handleUpdateCustomerStores = (updatedCustomer: Customer) => {
+    setCustomers((custs) =>
+      custs.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
+    );
   };
 
   return (
@@ -351,6 +359,12 @@ export function CustomerRow({
               >
                 Edit
               </button>
+              <button
+                onClick={() => setIsStoresDialogOpen(true)}
+                className="text-green-600 hover:text-green-800 font-medium"
+              >
+                Stores
+              </button>
               {authCustomer?.isAdmin && (
                 <button
                   onClick={() => handleLoginAs(customer.id)}
@@ -369,6 +383,12 @@ export function CustomerRow({
           </td>
         </>
       )}
+      <StoresDialog
+        customer={customer}
+        isOpen={isStoresDialogOpen}
+        onClose={() => setIsStoresDialogOpen(false)}
+        onUpdate={handleUpdateCustomerStores}
+      />
     </tr>
   );
 }
