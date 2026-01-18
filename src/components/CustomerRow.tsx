@@ -167,7 +167,7 @@ export function CustomerRow({
 
   const handleUpdateCustomerStores = (updatedCustomer: Customer) => {
     setCustomers((custs) =>
-      custs.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
+      custs.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c)),
     );
   };
 
@@ -302,7 +302,16 @@ export function CustomerRow({
       ) : (
         <>
           <td className="border border-gray-300 px-4 py-2">{customer.name}</td>
-          <td className="border border-gray-300 px-4 py-2">{customer.email}</td>
+          <td className="border border-gray-300 px-4 py-2">
+            <button
+              onClick={() =>
+                router.push(`/admin/sales?customerId=${customer.id}`)
+              }
+              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+            >
+              {customer.email}
+            </button>
+          </td>
           <td className="border border-gray-300 px-4 py-2">
             {customer.isAdmin ? "Yes" : "No"}
           </td>

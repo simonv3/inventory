@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 // GET customer with all their stores
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> }
+  { params }: { params: Promise<{ customerId: string }> },
 ) {
   try {
     const { customerId } = await params;
@@ -23,7 +23,7 @@ export async function GET(
     if (!customer) {
       return NextResponse.json(
         { error: "Customer not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function GET(
     console.error("Error fetching customer:", error);
     return NextResponse.json(
       { error: "Failed to fetch customer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -40,7 +40,7 @@ export async function GET(
 // PUT update customer
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> }
+  { params }: { params: Promise<{ customerId: string }> },
 ) {
   try {
     const { customerId } = await params;
@@ -69,18 +69,18 @@ export async function PUT(
     if (err?.code === "P2002") {
       return NextResponse.json(
         { error: "Email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (err?.code === "P2025") {
       return NextResponse.json(
         { error: "Customer not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(
       { error: "Failed to update customer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -88,7 +88,7 @@ export async function PUT(
 // DELETE customer
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> }
+  { params }: { params: Promise<{ customerId: string }> },
 ) {
   try {
     const { customerId } = await params;
@@ -102,12 +102,12 @@ export async function DELETE(
     if (err?.code === "P2025") {
       return NextResponse.json(
         { error: "Customer not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(
       { error: "Failed to delete customer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -58,28 +58,25 @@ export function StoresDialog({
     setLoading(true);
     try {
       const currentStoreIds = new Set(
-        customer.stores?.map((cs) => cs.storeId) || []
+        customer.stores?.map((cs) => cs.storeId) || [],
       );
 
       // Find stores to add and remove
       const storesToAdd = Array.from(selectedStores).filter(
-        (id) => !currentStoreIds.has(id)
+        (id) => !currentStoreIds.has(id),
       );
       const storesToRemove = Array.from(currentStoreIds).filter(
-        (id) => !selectedStores.has(id)
+        (id) => !selectedStores.has(id),
       );
 
       // Add new stores
       for (const storeId of storesToAdd) {
-        const res = await fetch(
-          `/api/customers/${customer.id}/stores`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ storeId }),
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`/api/customers/${customer.id}/stores`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ storeId }),
+          credentials: "include",
+        });
         if (!res.ok) {
           throw new Error(`Failed to add store ${storeId}`);
         }
@@ -92,7 +89,7 @@ export function StoresDialog({
           {
             method: "DELETE",
             credentials: "include",
-          }
+          },
         );
         if (!res.ok) {
           throw new Error(`Failed to remove store ${storeId}`);
@@ -112,7 +109,7 @@ export function StoresDialog({
     } catch (error) {
       console.error("Error updating stores:", error);
       showError(
-        error instanceof Error ? error.message : "Failed to update stores"
+        error instanceof Error ? error.message : "Failed to update stores",
       );
     } finally {
       setLoading(false);
@@ -132,7 +129,9 @@ export function StoresDialog({
 
         <div className="px-6 py-4 max-h-96 overflow-y-auto">
           {allStores.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No stores available</p>
+            <p className="text-gray-500 text-center py-8">
+              No stores available
+            </p>
           ) : (
             <div className="space-y-3">
               {allStores.map((store) => (

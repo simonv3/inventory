@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   Button,
@@ -24,10 +25,12 @@ export interface SaleFormInputs {
 
 function GlobalSalesPage() {
   const { currentStoreId, loading: storeLoading } = useStore();
+  const searchParams = useSearchParams();
   const [sales, setSales] = useState<Sale[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customerIdFilter, setCustomerIdFilter] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -72,6 +75,18 @@ function GlobalSalesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const customerId = searchParams.get("customerId");
+    if (customerId) {
+      const id = parseInt(customerId);
+      setCustomerIdFilter(id);
+      const customer = customers.find((c) => c.id === id);
+      if (customer) {
+        setSearchQuery(customer.email);
+      }
+    }
+  }, [searchParams, customers]);
 
   useEffect(() => {
     loadData();
@@ -198,6 +213,12 @@ function GlobalSalesPage() {
 
   const filteredSales = sales.filter((sale) => {
     const customer = customers.find((c) => c.id === sale.customerId);
+
+    // If a customer ID filter is set, filter by that customer
+    if (customerIdFilter && sale.customerId !== customerIdFilter) {
+      return false;
+    }
+
     return (
       customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer?.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
