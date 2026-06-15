@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:test": "bash scripts/dev-test-db.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,7 +12,8 @@
     "postinstall": "prisma generate",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test:e2e": "cypress run"
+    "test:e2e": "cypress run",
+    "test:e2e:local": "bash scripts/e2e-test-db.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -21,6 +23,7 @@
     "@prisma/client": "^7.1.0",
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
+    "daisyui": "^5.5.23",
     "dotenv": "^17.2.3",
     "next": "16.0.10",
     "nodemailer": "^7.0.11",

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET all stores for a customer
@@ -53,13 +54,14 @@ export async function POST(
     });
 
     return NextResponse.json(customerStore, { status: 201 });
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      return NextResponse.json(
-        { error: "Customer is already associated with this store" },
-        { status: 400 }
-      );
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2002: {
+        message: "Customer is already associated with this store",
+        status: 400,
+      },
+    });
+    if (handled) return handled;
     console.error("Error adding store to customer:", error);
     return NextResponse.json(
       { error: "Failed to add store to customer" },

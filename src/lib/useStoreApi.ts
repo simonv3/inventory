@@ -23,5 +23,3 @@ export function useStoreApi() {
 
   return { fetchWithStore, currentStoreId };
 }
-
-export default useStore;

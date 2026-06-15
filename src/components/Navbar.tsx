@@ -56,7 +56,7 @@ export function Navbar({ onLogout }: NavbarProps) {
   };
 
   const customerCanSeeMenu =
-    customer?.isAdmin || customer?.stores.find((s) => s.storeManager);
+    customer?.isAdmin || customer?.stores.some((s) => s.storeManager);
 
   const currentDropdownItems = dropdownItems(currentStoreId);
 
@@ -78,7 +78,7 @@ export function Navbar({ onLogout }: NavbarProps) {
                         (item) => pathname === item.href,
                       )
                         ? "text-blue-400 font-semibold"
-                        : "text-gray-300 hover:text-white"
+                        : "text-gray-300 dark:text-gray-300 hover:text-white"
                     }`}
                   >
                     Menu
@@ -111,7 +111,7 @@ export function Navbar({ onLogout }: NavbarProps) {
                             className={`block px-4 py-2 transition ${
                               pathname === item.href
                                 ? "bg-blue-600 text-white"
-                                : "text-gray-300 hover:bg-slate-600 hover:text-white"
+                                : "text-gray-300 dark:text-gray-300 hover:bg-slate-600 hover:text-white"
                             }`}
                             onClick={() => setIsDropdownOpen(false)}
                           >
@@ -131,7 +131,7 @@ export function Navbar({ onLogout }: NavbarProps) {
                 className={`transition ${
                   pathname === "/customer/portal"
                     ? "text-blue-400 font-semibold"
-                    : "text-gray-300 hover:text-white"
+                    : "text-gray-300 dark:text-gray-300 hover:text-white"
                 }`}
               >
                 Profile
@@ -141,7 +141,7 @@ export function Navbar({ onLogout }: NavbarProps) {
                 className={`transition ${
                   pathname?.startsWith("/") && pathname?.includes("/cart")
                     ? "text-blue-400 font-semibold"
-                    : "text-gray-300 hover:text-white"
+                    : "text-gray-300 dark:text-gray-300 hover:text-white"
                 }`}
                 onClick={(e) => {
                   if (!currentStoreId) {
@@ -153,7 +153,7 @@ export function Navbar({ onLogout }: NavbarProps) {
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
+                className="btn btn-error btn-sm"
               >
                 Logout
               </button>

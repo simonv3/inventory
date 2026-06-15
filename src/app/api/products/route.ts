@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { getStoreIdFromRequest } from "@/lib/storeUtils";
+import { handlePrismaError } from "@/lib/prismaErrors";
 
 // GET all products with categories and sources
 export async function GET(request: NextRequest) {
@@ -114,18 +115,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating product:", error);
-    const errorCode = (error as any)?.code;
-
-    if (errorCode === "P2003") {
-      return NextResponse.json(
-        { error: "Selected source does not exist" },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2003: { message: "Selected source does not exist", status: 400 },
+      }) ??
+      NextResponse.json({ error: "Failed to create product" }, { status: 500 })
     );
   }
 }

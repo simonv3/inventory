@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { decodeCustomerToken } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
@@ -16,10 +17,7 @@ export async function POST(request: NextRequest) {
     // The token format is base64-encoded JSON: {customerId, email, timestamp}
     let currentCustomerId: number;
     try {
-      const decodedToken = JSON.parse(
-        Buffer.from(token, "base64").toString("utf-8")
-      );
-      currentCustomerId = decodedToken.customerId;
+      currentCustomerId = decodeCustomerToken(token).customerId;
     } catch (e) {
       return NextResponse.json(
         { error: "Invalid token format" },

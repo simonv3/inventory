@@ -45,8 +45,8 @@ export default function OrderPage() {
   if (error || !order) {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-red-600">
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg p-6">
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400">
             {error || "Order not found"}
           </h1>
         </div>
@@ -58,27 +58,27 @@ export default function OrderPage() {
     <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold mb-6">Order Details</h1>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
-            <p className="text-gray-600 text-sm">Order ID</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Order ID</p>
             <p className="text-2xl font-bold">{order.id}</p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Customer</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Customer</p>
             <p className="text-2xl font-bold">
               {order.customer?.name || "Unknown"}
             </p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Order Date</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Order Date</p>
             <p className="text-lg">
               {new Date(order.saleDate).toLocaleDateString()} at{" "}
               {new Date(order.saleDate).toLocaleTimeString()}
             </p>
           </div>
           <div>
-            <p className="text-gray-600 text-sm">Markup %</p>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Markup %</p>
             <p className="text-lg font-semibold">{order.markupPercent}%</p>
           </div>
         </div>
@@ -88,21 +88,21 @@ export default function OrderPage() {
         <h2 className="text-xl font-bold mb-4">Items</h2>
         <div className="overflow-x-auto mb-6">
           <table className="w-full border-collapse">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
-                <th className="border border-gray-300 px-4 py-2 text-left">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left">
                   Product
                 </th>
-                <th className="border border-gray-300 px-4 py-2 text-right">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                   Qty
                 </th>
-                <th className="border border-gray-300 px-4 py-2 text-right">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                   Cost/Unit
                 </th>
-                <th className="border border-gray-300 px-4 py-2 text-right">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                   Sale/Unit
                 </th>
-                <th className="border border-gray-300 px-4 py-2 text-right">
+                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                   Subtotal
                 </th>
               </tr>
@@ -111,23 +111,23 @@ export default function OrderPage() {
               {order.items && order.items.length > 0 ? (
                 order.items.map((item, idx) => (
                   <tr key={idx}>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">
                       {item.product?.name || `Product #${item.productId}`}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                       {item.quantity}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                       ${item.costPrice.toFixed(2)}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right">
                       $
                       {(
                         item.costPrice *
                         (1 + order.markupPercent / 100)
                       ).toFixed(2)}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2 text-right font-semibold">
+                    <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-right font-semibold">
                       $
                       {(
                         item.costPrice *
@@ -141,7 +141,7 @@ export default function OrderPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="border border-gray-300 px-4 py-2 text-center text-gray-500"
+                    className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                   >
                     No items in this order
                   </td>
@@ -156,14 +156,14 @@ export default function OrderPage() {
         <div className="flex justify-end">
           <div className="w-64">
             <div className="flex justify-between mb-2">
-              <span className="text-gray-600">Total Cost:</span>
+              <span className="text-gray-600 dark:text-gray-300">Total Cost:</span>
               <span className="font-semibold">
                 ${order.totalCost.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t-2 pt-2">
               <span>Total Price:</span>
-              <span className="text-green-600">
+              <span className="text-green-600 dark:text-green-400">
                 ${order.totalPrice.toFixed(2)}
               </span>
             </div>

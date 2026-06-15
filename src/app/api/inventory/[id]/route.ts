@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET single inventory entry
@@ -52,15 +53,14 @@ export async function PUT(
 
     return NextResponse.json(inventory);
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Inventory entry not found" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to update inventory entry" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Inventory entry not found", status: 404 },
+      }) ??
+      NextResponse.json(
+        { error: "Failed to update inventory entry" },
+        { status: 500 }
+      )
     );
   }
 }
@@ -78,15 +78,14 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Inventory entry not found" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to delete inventory entry" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Inventory entry not found", status: 404 },
+      }) ??
+      NextResponse.json(
+        { error: "Failed to delete inventory entry" },
+        { status: 500 }
+      )
     );
   }
 }

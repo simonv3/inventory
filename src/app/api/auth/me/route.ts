@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { decodeCustomerToken } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -10,10 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Decode token to get customer ID
-    const decodedToken = JSON.parse(
-      Buffer.from(token, "base64").toString("utf-8")
-    );
-    const customerId = decodedToken.customerId;
+    const customerId = decodeCustomerToken(token).customerId;
 
     // Fetch customer from database with stores
     const customer = await prisma.customer.findUnique({

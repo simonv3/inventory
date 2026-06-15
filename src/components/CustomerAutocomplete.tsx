@@ -114,13 +114,13 @@ export function CustomerAutocomplete({
           inputValue && filteredCustomers.length > 0 && setIsOpen(true)
         }
         placeholder="Search by name or email..."
-        className={`w-full px-3 py-2 border rounded ${
-          error ? "border-red-500" : "border-gray-300"
+        className={`w-full px-3 py-2 border rounded dark:bg-gray-900 ${
+          error ? "border-red-500" : "border-gray-300 dark:border-gray-600"
         }`}
       />
 
       {isOpen && filteredCustomers.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg max-h-60 overflow-y-auto">
           {filteredCustomers.map((customer, index) => (
             <button
               key={customer.id}
@@ -130,7 +130,7 @@ export function CustomerAutocomplete({
               className={`w-full px-3 py-2 text-left transition ${
                 index === highlightedIndex
                   ? "bg-blue-500 text-white"
-                  : "bg-white hover:bg-gray-50"
+                  : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
               }`}
             >
               <div className="font-medium">{customer.name}</div>
@@ -140,7 +140,7 @@ export function CustomerAutocomplete({
         </div>
       )}
 
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      {error && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{error}</p>}
     </div>
   );
 }

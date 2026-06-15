@@ -5,6 +5,8 @@ import { Customer } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { StoresDialog } from "./StoresDialog";
+import { CustomerEditCells } from "./customers/CustomerEditCells";
+import { CustomerViewCells } from "./customers/CustomerViewCells";
 
 interface CustomerRowProps {
   customer: Customer;
@@ -34,30 +36,21 @@ export function CustomerRow({
   const { customer: authCustomer } = useAuth();
   const router = useRouter();
 
-  const handleInlineEdit = (customer: Customer) => {
-    setIsEditing(true);
-    setEditData({ ...customer });
-  };
-
   const handleInlineSave = async (customerId: number) => {
     if (!editData) return;
 
-    // Save customer name/email
     const result = await fetchData(
       `/api/customers/${customerId}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editData.name,
-          email: editData.email,
-        }),
+        body: JSON.stringify({ name: editData.name, email: editData.email }),
       },
       true,
       "Customer updated successfully",
     );
 
-    // Save markup percentage if current store is selected
+    // Persist the per-store markup when a store is in context.
     if (result && currentStoreId && editData.stores) {
       const customerStore = editData.stores.find(
         (cs) => cs.storeId === currentStoreId,
@@ -68,9 +61,7 @@ export function CustomerRow({
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              markupPercent: customerStore.markupPercent,
-            }),
+            body: JSON.stringify({ markupPercent: customerStore.markupPercent }),
           },
           false,
         );
@@ -85,21 +76,13 @@ export function CustomerRow({
     }
   };
 
-  const handleInlineCancel = () => {
-    setIsEditing(false);
-    setEditData(null);
-  };
-
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure?")) {
-      try {
-        const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
-        if (res.ok) {
-          setCustomers((custs) => custs.filter((c) => c.id !== id));
-        }
-      } catch (error) {
-        console.error("Error deleting customer:", error);
-      }
+    if (!confirm("Are you sure?")) return;
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+      if (res.ok) setCustomers((custs) => custs.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error("Error deleting customer:", error);
     }
   };
 
@@ -111,12 +94,8 @@ export function CustomerRow({
         body: JSON.stringify({ customerId }),
         credentials: "include",
       });
-
-      if (res.ok) {
-        router.push("/customer/portal");
-      } else {
-        alert("Failed to login as customer");
-      }
+      if (res.ok) router.push("/customer/portal");
+      else alert("Failed to login as customer");
     } catch (error) {
       console.error("Error logging in as customer:", error);
       alert("Error logging in as customer");
@@ -124,37 +103,29 @@ export function CustomerRow({
   };
 
   const handleToggleStoreManager = async (
-    customerId: number,
     storeId: number,
     isManager: boolean,
   ) => {
     try {
-      const res = await fetch(
-        `/api/customers/${customerId}/stores/${storeId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ storeManager: isManager }),
-        },
-      );
-
+      const res = await fetch(`/api/customers/${customer.id}/stores/${storeId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeManager: isManager }),
+      });
       if (res.ok) {
-        // Update the customer in the list
         setCustomers((custs) =>
-          custs.map((c) => {
-            if (c.id === customerId) {
-              return {
-                ...c,
-                stores: c.stores?.map((cs) => {
-                  if (cs.storeId === storeId) {
-                    return { ...cs, storeManager: isManager };
-                  }
-                  return cs;
-                }),
-              };
-            }
-            return c;
-          }),
+          custs.map((c) =>
+            c.id === customer.id
+              ? {
+                  ...c,
+                  stores: c.stores?.map((cs) =>
+                    cs.storeId === storeId
+                      ? { ...cs, storeManager: isManager }
+                      : cs,
+                  ),
+                }
+              : c,
+          ),
         );
       } else {
         alert("Failed to update store manager status");
@@ -172,225 +143,45 @@ export function CustomerRow({
   };
 
   return (
-    <tr key={customer.id} className="hover:bg-gray-50">
-      <td className="border border-gray-300 px-4 py-2 text-center">
+    <tr className="hover:bg-base-200">
+      <td className="border border-base-300 px-4 py-2 text-center">
         <input
           type="checkbox"
           checked={selectedCustomerIds.has(customer.id)}
           onChange={() => toggleSelectCustomer(customer.id)}
-          className="cursor-pointer"
+          className="checkbox checkbox-sm"
         />
       </td>
       {isEditing && editData ? (
-        <>
-          <td className="border border-gray-300 px-2 py-1">
-            <input
-              type="text"
-              value={editData.name || ""}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  name: e.target.value,
-                })
-              }
-              className="w-full px-2 py-1 border rounded"
-            />
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            <input
-              type="email"
-              value={editData.email || ""}
-              onChange={(e) =>
-                setEditData({
-                  ...editData,
-                  email: e.target.value,
-                })
-              }
-              className="w-full px-2 py-1 border rounded"
-            />
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            {customer.isAdmin ? "Yes" : "No"}
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            {currentStoreId ? (
-              <button
-                onClick={() => {
-                  const currentIsManager = customer.stores?.find(
-                    (cs) => cs.storeId === currentStoreId,
-                  )?.storeManager;
-                  handleToggleStoreManager(
-                    customer.id,
-                    currentStoreId,
-                    !currentIsManager,
-                  );
-                }}
-                className={`px-2 py-1 rounded text-sm font-medium transition ${
-                  customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                    ?.storeManager
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                }`}
-              >
-                {customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                  ?.storeManager
-                  ? "Manager"
-                  : "Set Manager"}
-              </button>
-            ) : (
-              <span>
-                {customer.stores?.some((cs) => cs.storeManager) ? "Yes" : "No"}
-              </span>
-            )}
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            {currentStoreId ? (
-              <input
-                type="number"
-                step="0.01"
-                value={
-                  editData.stores?.find((cs) => cs.storeId === currentStoreId)
-                    ?.markupPercent || 0
-                }
-                onChange={(e) => {
-                  const newStores =
-                    editData.stores?.map((cs) => {
-                      if (cs.storeId === currentStoreId) {
-                        return {
-                          ...cs,
-                          markupPercent: parseFloat(e.target.value) || 0,
-                        };
-                      }
-                      return cs;
-                    }) || [];
-                  setEditData({
-                    ...editData,
-                    stores: newStores,
-                  });
-                }}
-                className="w-full px-2 py-1 border rounded"
-              />
-            ) : (
-              <span>—</span>
-            )}
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            {customer.stores && customer.stores.length > 0
-              ? customer.stores.map((cs) => cs.store?.name).join(", ")
-              : "—"}
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            {new Date((editData as Customer).createdAt).toLocaleDateString()}
-          </td>
-          <td className="border border-gray-300 px-2 py-1">
-            <div className="flex gap-1">
-              <button
-                onClick={() => handleInlineSave(customer.id)}
-                className="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-700"
-              >
-                Save
-              </button>
-              <button
-                onClick={handleInlineCancel}
-                className="bg-gray-400 text-white px-2 py-1 rounded text-sm hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </td>
-        </>
+        <CustomerEditCells
+          customer={customer}
+          editData={editData}
+          setEditData={setEditData}
+          currentStoreId={currentStoreId}
+          onToggleManager={handleToggleStoreManager}
+          onSave={() => handleInlineSave(customer.id)}
+          onCancel={() => {
+            setIsEditing(false);
+            setEditData(null);
+          }}
+        />
       ) : (
-        <>
-          <td className="border border-gray-300 px-4 py-2">{customer.name}</td>
-          <td className="border border-gray-300 px-4 py-2">
-            <button
-              onClick={() =>
-                router.push(`/admin/sales?customerId=${customer.id}`)
-              }
-              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-            >
-              {customer.email}
-            </button>
-          </td>
-          <td className="border border-gray-300 px-4 py-2">
-            {customer.isAdmin ? "Yes" : "No"}
-          </td>
-          <td className="border border-gray-300 px-4 py-2">
-            {currentStoreId ? (
-              <button
-                onClick={() => {
-                  const currentIsManager = customer.stores?.find(
-                    (cs) => cs.storeId === currentStoreId,
-                  )?.storeManager;
-                  handleToggleStoreManager(
-                    customer.id,
-                    currentStoreId,
-                    !currentIsManager,
-                  );
-                }}
-                className={`px-2 py-1 rounded text-sm font-medium transition ${
-                  customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                    ?.storeManager
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                }`}
-              >
-                {customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                  ?.storeManager
-                  ? "Manager"
-                  : "Set Manager"}
-              </button>
-            ) : (
-              <span>
-                {customer.stores?.some((cs) => cs.storeManager) ? "Yes" : "No"}
-              </span>
-            )}
-          </td>{" "}
-          <td className="border border-gray-300 px-4 py-2">
-            {currentStoreId
-              ? (customer.stores?.find((cs) => cs.storeId === currentStoreId)
-                  ?.markupPercent ?? "—")
-              : "—"}
-          </td>
-          <td className="border border-gray-300 px-4 py-2">
-            {customer.stores && customer.stores.length > 0
-              ? customer.stores.map((cs) => cs.store?.name).join(", ")
-              : "—"}
-          </td>
-          <td className="border border-gray-300 px-4 py-2">
-            {new Date(customer.createdAt).toLocaleDateString()}
-          </td>
-          <td className="border border-gray-300 px-4 py-2">
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleInlineEdit(customer)}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => setIsStoresDialogOpen(true)}
-                className="text-green-600 hover:text-green-800 font-medium"
-              >
-                Stores
-              </button>
-              {authCustomer?.isAdmin && (
-                <button
-                  onClick={() => handleLoginAs(customer.id)}
-                  className="text-purple-600 hover:text-purple-800 font-medium"
-                >
-                  Login As
-                </button>
-              )}
-              <button
-                onClick={() => handleDelete(customer.id)}
-                className="text-red-600 hover:text-red-800 font-medium"
-              >
-                Delete
-              </button>
-            </div>
-          </td>
-        </>
+        <CustomerViewCells
+          customer={customer}
+          currentStoreId={currentStoreId}
+          canImpersonate={!!authCustomer?.isAdmin}
+          onEmailClick={() =>
+            router.push(`/admin/sales?customerId=${customer.id}`)
+          }
+          onToggleManager={handleToggleStoreManager}
+          onEdit={() => {
+            setIsEditing(true);
+            setEditData({ ...customer });
+          }}
+          onStores={() => setIsStoresDialogOpen(true)}
+          onLoginAs={() => handleLoginAs(customer.id)}
+          onDelete={() => handleDelete(customer.id)}
+        />
       )}
       <StoresDialog
         customer={customer}

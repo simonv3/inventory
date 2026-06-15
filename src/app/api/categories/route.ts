@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 
 // GET all categories
 export async function GET() {
@@ -38,18 +39,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     console.error("Error creating category:", error);
-    const errorCode = (error as any)?.code;
-
-    if (errorCode === "P2002") {
-      return NextResponse.json(
-        { error: "Category with this name already exists" },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create category" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2002: {
+          message: "Category with this name already exists",
+          status: 409,
+        },
+      }) ??
+      NextResponse.json({ error: "Failed to create category" }, { status: 500 })
     );
   }
 }

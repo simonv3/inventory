@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* daisyUI: light by default, dark when the OS prefers it — mirrors the
+   existing prefers-color-scheme based dark mode so `dark:` utilities and
+   daisyUI's semantic colors stay in sync. */
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

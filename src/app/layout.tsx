@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Green's and Beans Inventory",
-  description: "Multi-store inventory management system",
+  title: "Greens and Beans Inventory",
+  description: "Inventory management",
   icons: {
     icon: "/favicon.svg",
   },

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/UI";
 import { AdminOnlyGuard } from "@/components/AdminOnlyGuard";
+import { AddStoreForm } from "@/components/stores/AddStoreForm";
+import { StoreRow } from "@/components/stores/StoreRow";
 import { useStore } from "@/context/StoreContext";
 
 interface Store {
@@ -152,137 +154,65 @@ function StoresPageContent() {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
+        <div className="alert alert-error mb-4">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-700">
+        <div className="alert alert-success mb-4">
           {success}
         </div>
       )}
 
       {isAddingStore && (
-        <div className="mb-8 p-6 bg-white rounded-lg shadow">
-          <h2 className="text-xl font-bold mb-4">Create New Store</h2>
-          <form onSubmit={handleAddStore} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Store Name
-              </label>
-              <input
-                type="text"
-                value={newStoreName}
-                onChange={(e) => setNewStoreName(e.target.value)}
-                placeholder="Enter store name"
-                className="w-full px-3 py-2 border border-gray-300 rounded"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button type="submit">Create Store</Button>
-              <button
-                type="button"
-                onClick={() => setIsAddingStore(false)}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+        <AddStoreForm
+          name={newStoreName}
+          onNameChange={setNewStoreName}
+          onSubmit={handleAddStore}
+          onCancel={() => setIsAddingStore(false)}
+        />
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+      <div className="card bg-base-100 shadow overflow-hidden">
+        <table className="table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              <th className="px-6 py-3 text-left text-sm font-semibold">
                 Store Name
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              <th className="px-6 py-3 text-left text-sm font-semibold">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+              <th className="px-6 py-3 text-left text-sm font-semibold">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody>
             {stores.map((store) => (
-              <tr key={store.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  {editingId === store.id ? (
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded"
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="font-medium">
-                      {store.name}
-                      {currentStoreId === store.id && (
-                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                          Current
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {new Date(store.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 text-sm space-x-3 flex gap-2">
-                  {editingId === store.id ? (
-                    <>
-                      <button
-                        onClick={() => handleUpdateStore(store.id)}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="text-gray-600 hover:text-gray-700 font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setEditingId(store.id);
-                          setEditName(store.name);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteStore(store.id)}
-                        disabled={currentStoreId === store.id}
-                        className={`font-medium ${
-                          currentStoreId === store.id
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "text-red-600 hover:text-red-700"
-                        }`}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
+              <StoreRow
+                key={store.id}
+                name={store.name}
+                createdAt={store.createdAt}
+                isCurrent={currentStoreId === store.id}
+                isEditing={editingId === store.id}
+                editName={editName}
+                onEditNameChange={setEditName}
+                onStartEdit={() => {
+                  setEditingId(store.id);
+                  setEditName(store.name);
+                }}
+                onSave={() => handleUpdateStore(store.id)}
+                onCancel={() => setEditingId(null)}
+                onDelete={() => handleDeleteStore(store.id)}
+              />
             ))}
           </tbody>
         </table>
 
         {stores.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-base-content/60">
             No stores found. Create one to get started.
           </div>
         )}

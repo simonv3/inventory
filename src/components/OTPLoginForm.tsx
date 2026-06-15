@@ -81,13 +81,13 @@ export default function OTPLoginForm({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-base-content">
             {title}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-base-content/70">
             {step === "email"
               ? "Sign in with your email to receive a one-time code"
               : "Enter the code we sent to your email"}
@@ -99,13 +99,13 @@ export default function OTPLoginForm({
           onSubmit={step === "email" ? handleRequestOTP : handleVerifyOTP}
         >
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+            <div className="alert alert-error">
+              <span className="text-sm font-medium">{error}</span>
             </div>
           )}
 
           {step === "email" ? (
-            <div className="rounded-md shadow-sm">
+            <div>
               <label htmlFor="email" className="sr-only">
                 Email address
               </label>
@@ -115,14 +115,14 @@ export default function OTPLoginForm({
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="input w-full"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           ) : (
-            <div className="rounded-md shadow-sm">
+            <div>
               <label htmlFor="otp" className="sr-only">
                 One-time code
               </label>
@@ -133,14 +133,14 @@ export default function OTPLoginForm({
                 autoComplete="off"
                 required
                 maxLength={6}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-center text-2xl tracking-widest"
+                className="input w-full text-center text-2xl tracking-widest"
                 placeholder="000000"
                 value={otpCode}
                 onChange={(e) =>
                   setOtpCode(e.target.value.replace(/[^0-9]/g, ""))
                 }
               />
-              <p className="mt-2 text-center text-xs text-gray-600">
+              <p className="mt-2 text-center text-xs text-base-content/70">
                 Check your email for the 6-digit code
               </p>
             </div>
@@ -150,7 +150,7 @@ export default function OTPLoginForm({
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="btn btn-primary w-full"
             >
               {loading
                 ? "Processing..."
@@ -169,7 +169,7 @@ export default function OTPLoginForm({
                   setOtpCode("");
                   setError("");
                 }}
-                className="text-sm text-blue-600 hover:text-blue-500"
+                className="btn btn-link btn-sm"
               >
                 Change email address
               </button>

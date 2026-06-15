@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPrismaErrorCode } from "@/lib/prismaErrors";
 import { Prisma } from ".prisma/client/edge";
 
 export const maxDuration = 60;
@@ -545,8 +546,7 @@ async function importCustomer(
 
     return { success: true };
   } catch (error) {
-    const errorCode = (error as unknown as { code?: string })?.code;
-    if (errorCode === "P2002") {
+    if (getPrismaErrorCode(error) === "P2002") {
       return { success: false, error: `Email already exists: ${email}` };
     }
     return { success: false, error: (error as Error).message };
@@ -572,8 +572,7 @@ async function importSource(
 
     return { success: true };
   } catch (error) {
-    const errorCode = (error as unknown as { code?: string })?.code;
-    if (errorCode === "P2002") {
+    if (getPrismaErrorCode(error) === "P2002") {
       return { success: false, error: `Source already exists: ${name}` };
     }
     return { success: false, error: (error as Error).message };

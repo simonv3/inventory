@@ -1,0 +1,21 @@
+# Disposable Postgres for local E2E / `npm run dev:test`.
+# Not for production. Data lives in tmpfs, so nothing is persisted and
+# `docker compose -f docker-compose.test.yml down` leaves no trace.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: inventory_test
+    ports:
+      - "${TEST_DB_PORT:-5433}:5432"
+    # Readiness gate so `up --wait` blocks until Postgres accepts connections,
+    # replacing the old pg_isready polling loop.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d inventory_test"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql/data

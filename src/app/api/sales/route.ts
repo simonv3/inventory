@@ -79,10 +79,17 @@ export async function POST(request: NextRequest) {
       salePrice: number;
     }> = [];
 
+    // Fetch all referenced products in a single query, then look them up by id.
+    const productIds = items.map((item: SaleItem) =>
+      parseInt(String(item.productId))
+    );
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+    });
+    const productById = new Map(products.map((p) => [p.id, p]));
+
     for (const item of items) {
-      const product = await prisma.product.findUnique({
-        where: { id: parseInt(item.productId) },
-      });
+      const product = productById.get(parseInt(String(item.productId)));
 
       if (!product) {
         return NextResponse.json(

@@ -4,7 +4,7 @@ export { StoreSelector } from "./StoreSelector";
 export { AdminGuard } from "./AdminGuard";
 export { AdminOnlyGuard } from "./AdminOnlyGuard";
 export { ImportCsvButton } from "./ImportCsvButton";
-export { Dialog, Button, Input, Select, Table } from "./UI";
+export { Dialog, Button, Input, Select } from "./UI";
 export { default as BulkImportDialog } from "./BulkImportDialog";
 export { LoadingSkeleton } from "./LoadingSkeleton";
 export { StoresDialog } from "./StoresDialog";

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET customer with all their stores
@@ -65,22 +66,15 @@ export async function PUT(
 
     return NextResponse.json(customer);
   } catch (error) {
-    const err = error as unknown as { code?: string };
-    if (err?.code === "P2002") {
-      return NextResponse.json(
-        { error: "Email already exists" },
-        { status: 400 },
-      );
-    }
-    if (err?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Customer not found" },
-        { status: 404 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to update customer" },
-      { status: 500 },
+    return (
+      handlePrismaError(error, {
+        P2002: { message: "Email already exists", status: 400 },
+        P2025: { message: "Customer not found", status: 404 },
+      }) ??
+      NextResponse.json(
+        { error: "Failed to update customer" },
+        { status: 500 },
+      )
     );
   }
 }
@@ -98,16 +92,14 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const err = error as unknown as { code?: string };
-    if (err?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Customer not found" },
-        { status: 404 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to delete customer" },
-      { status: 500 },
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Customer not found", status: 404 },
+      }) ??
+      NextResponse.json(
+        { error: "Failed to delete customer" },
+        { status: 500 },
+      )
     );
   }
 }

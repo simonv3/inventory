@@ -1,8 +1,7 @@
 "use client";
 
-import { SaleFormInputs } from "@/app/admin/sales/page";
 import { Button } from "@/components";
-import { Customer, Product } from "@/types";
+import { Customer, Product, SaleFormInputs } from "@/types";
 
 interface SaleDialogProps {
   customers: Customer[];
@@ -42,7 +41,7 @@ function SaleDialog({
           {...register("customerId", {
             required: "Customer is required",
           })}
-          className="w-full px-3 py-2 border border-gray-300 rounded"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded"
         >
           <option value="">Select Customer</option>
           {customers.map((c) => (
@@ -52,7 +51,7 @@ function SaleDialog({
           ))}
         </select>
         {errors.customerId && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 dark:text-red-400 text-sm mt-1">
             {errors.customerId.message}
           </p>
         )}
@@ -66,10 +65,10 @@ function SaleDialog({
           {...register("markupPercent", {
             required: "Markup % is required",
           })}
-          className="w-full px-3 py-2 border border-gray-300 rounded"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded"
         />
         {errors.markupPercent && (
-          <p className="text-red-500 text-sm mt-1">
+          <p className="text-red-500 dark:text-red-400 text-sm mt-1">
             {errors.markupPercent.message}
           </p>
         )}
@@ -91,11 +90,11 @@ function SaleDialog({
           return (
             <div
               key={field.id}
-              className="mb-4 p-3 bg-gray-50 rounded border border-gray-200"
+              className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
             >
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
                     Product
                   </label>
                   <div className="flex gap-2">
@@ -103,7 +102,7 @@ function SaleDialog({
                       {...register(`items.${idx}.productId`, {
                         required: "Product is required",
                       })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm max-w-[90%]"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded text-sm max-w-[90%]"
                     >
                       <option value="">Select Product</option>
                       {products.map((p) => (
@@ -122,7 +121,7 @@ function SaleDialog({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
                     Quantity
                   </label>
                   <input
@@ -130,22 +129,22 @@ function SaleDialog({
                     {...register(`items.${idx}.quantity`, {
                       required: "Quantity is required",
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-900 rounded text-sm"
                   />
                 </div>
               </div>
               {product && (
                 <div className="grid grid-cols-3 gap-2 text-sm mt-3">
-                  <div className="p-2 bg-white rounded border border-gray-200">
-                    <label className="text-gray-600 text-xs">Cost/Unit</label>
+                  <div className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <label className="text-gray-600 dark:text-gray-300 text-xs">Cost/Unit</label>
                     <p className="font-semibold">${costPrice.toFixed(2)}</p>
                   </div>
-                  <div className="p-2 bg-white rounded border border-gray-200">
-                    <label className="text-gray-600 text-xs">Sale/Unit</label>
+                  <div className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <label className="text-gray-600 dark:text-gray-300 text-xs">Sale/Unit</label>
                     <p className="font-semibold">${salePrice.toFixed(2)}</p>
                   </div>
-                  <div className="p-2 bg-white rounded border border-gray-200">
-                    <label className="text-gray-600 text-xs">Subtotal</label>
+                  <div className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <label className="text-gray-600 dark:text-gray-300 text-xs">Subtotal</label>
                     <p className="font-semibold">
                       ${(salePrice * parseInt(quantity || "0")).toFixed(2)}
                     </p>

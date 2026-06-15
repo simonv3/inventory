@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET single product with categories and source
@@ -103,12 +104,11 @@ export async function PUT(
       categories: product.categories.map((pc) => pc.category),
     });
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: "Failed to update product" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Product not found", status: 404 },
+      }) ??
+      NextResponse.json({ error: "Failed to update product" }, { status: 500 })
     );
   }
 }
@@ -126,9 +126,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
+    const handled = handlePrismaError(error, {
+      P2025: { message: "Product not found", status: 404 },
+    });
+    if (handled) return handled;
     console.error(error);
     return NextResponse.json(
       { error: "Failed to delete product" },

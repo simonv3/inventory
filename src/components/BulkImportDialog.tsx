@@ -99,12 +99,12 @@ export default function BulkImportDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title="Bulk Import Data">
       <div className="space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           Upload a CSV file to import records. The system will automatically
           detect the data type based on column names.
         </p>
 
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
           <input
             ref={fileInputRef}
             type="file"
@@ -114,18 +114,18 @@ export default function BulkImportDialog({
             id="bulk-import-file"
           />
           <label htmlFor="bulk-import-file" className="cursor-pointer">
-            <div className="text-gray-600">
+            <div className="text-gray-600 dark:text-gray-300">
               {file ? (
                 <div>
-                  <p className="font-semibold text-blue-600">{file.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-semibold text-blue-600 dark:text-blue-400">{file.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     ({(file.size / 1024).toFixed(2)} KB)
                   </p>
                 </div>
               ) : (
                 <div>
                   <p className="font-semibold">Click to select a CSV file</p>
-                  <p className="text-sm text-gray-500">or drag and drop</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">or drag and drop</p>
                 </div>
               )}
             </div>
@@ -133,19 +133,19 @@ export default function BulkImportDialog({
         </div>
 
         {result && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="font-semibold text-green-800 mb-2">
+          <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 rounded-lg p-4">
+            <p className="font-semibold text-green-800 dark:text-green-200 mb-2">
               Import completed ({result.type})
             </p>
-            <p className="text-green-700 mb-2">
+            <p className="text-green-700 dark:text-green-300 mb-2">
               ✓ {result.success} records imported successfully
             </p>
             {result.failed > 0 && (
               <div className="mt-3">
-                <p className="text-red-700 mb-2">
+                <p className="text-red-700 dark:text-red-300 mb-2">
                   ✗ {result.failed} records failed:
                 </p>
-                <ul className="text-sm text-red-600 space-y-1 max-h-48 overflow-y-auto">
+                <ul className="text-sm text-red-600 dark:text-red-400 space-y-1 max-h-48 overflow-y-auto">
                   {result.errors.map(
                     (err: { row: number; error?: string }, idx: number) => (
                       <li key={idx}>
@@ -162,7 +162,7 @@ export default function BulkImportDialog({
         <div className="flex gap-2 justify-end">
           <button
             onClick={() => onOpenChange(false)}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             Cancel
           </button>

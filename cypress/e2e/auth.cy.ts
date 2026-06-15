@@ -1,110 +1,59 @@
-describe("Authentication - Login Flow", () => {
+// Auth — core happy paths and access control.
+// Covers REQUIREMENTS.md FR-2.* (OTP login) and FR-3.1/3.2 (route protection).
+describe("Authentication", () => {
   beforeEach(() => {
-    // Reset database before each test
     cy.resetDatabase();
   });
 
-  it("should display login page", () => {
+  it("shows the customer login form", () => {
     cy.visit("/customer/login");
-    cy.contains("Login").should("be.visible");
+    cy.contains("Customer Login").should("be.visible");
     cy.get('input[type="email"]').should("exist");
   });
 
-  it("should request OTP for valid email", () => {
-    const testEmail = "test@example.com";
+  it("requests an OTP for a known email and advances to the code step (FR-2.1)", () => {
+    cy.createTestCustomer({ email: "member@example.com", name: "Member" });
 
-    // Create a test customer
-    cy.createTestCustomer({
-      email: testEmail,
-      name: "Test User",
-    });
-
-    // Visit login page
     cy.visit("/customer/login");
+    cy.get('input[type="email"]').type("member@example.com");
+    cy.contains("button", "Send Code").click();
 
-    // Enter email and request OTP
-    cy.get('input[type="email"]').type(testEmail);
-    cy.get('button:contains("Send Code")').click();
-
-    // Check for success message
-    cy.contains(/OTP sent|check your email/i).should("be.visible");
+    // The form swaps to the 6-digit code step.
+    cy.get('input[placeholder="000000"]').should("be.visible");
+    cy.contains("button", "Verify & Sign In").should("be.visible");
   });
 
-  it("should show error for non-existent email", () => {
+  it("shows an error for an unknown email once customers exist (FR-2.5)", () => {
+    // Seed a customer first so the first-customer bootstrap path does NOT fire
+    // (with zero customers, any email is auto-provisioned as admin instead).
+    cy.createTestCustomer({ email: "owner@example.com", isAdmin: true });
+
     cy.visit("/customer/login");
+    cy.get('input[type="email"]').type("nobody@example.com");
+    cy.contains("button", "Send Code").click();
 
-    cy.get('input[type="email"]').type("nonexistent@example.com");
-    cy.get('button:contains("Send Code")').click();
-
-    // Should show error message
-    cy.contains(/not found|does not exist|error/i).should("be.visible");
+    cy.contains(/not found/i).should("be.visible");
   });
 
-  it("should prevent login with invalid email format", () => {
+  it("does not advance with an invalid email format", () => {
     cy.visit("/customer/login");
+    cy.get('input[type="email"]').type("not-an-email");
+    cy.contains("button", "Send Code").click();
 
-    cy.get('input[type="email"]').type("invalid-email");
-    cy.get('button[type="submit"]').should("be.disabled");
+    // HTML5 validation blocks the submit, so we stay on the email step.
+    cy.get('input[placeholder="000000"]').should("not.exist");
   });
 
-  it("should successfully login and redirect to portal", () => {
-    const testEmail = "testuser@example.com";
+  it("lets an admin reach the dashboard via a session cookie (FR-3.2)", () => {
+    cy.loginAs({ email: "admin@example.com", isAdmin: true });
+    cy.createTestStore("Main Store");
 
-    // Create test customer
-    cy.createTestCustomer({
-      email: testEmail,
-      name: "Test User",
-    });
-
-    // Note: In a real scenario, we'd need to mock or intercept the OTP verification
-    // For now, we're testing the UI flow up to OTP request
-    cy.visit("/customer/login");
-    cy.get('input[type="email"]').type(testEmail);
-    cy.get('button:contains("Request OTP")').click();
-
-    // Verify OTP input appears
-    cy.get('input[type="text"]').should("exist");
+    cy.visit("/admin");
+    cy.contains("Admin Dashboard").should("be.visible");
   });
 
-  it("should allow admin user to access admin portal", () => {
-    const adminEmail = "admin@example.com";
-
-    // Create an admin customer
-    cy.createTestCustomer({
-      email: adminEmail,
-      name: "Admin User",
-      isAdmin: true,
-    });
-
-    // Admin should be able to visit /admin
-    cy.visit("/");
-    // After login, admin should have access to admin routes
-    // This would be tested once OTP verification is complete
-  });
-
-  it("should allow regular customer to access customer portal", () => {
-    const customerEmail = "customer@example.com";
-
-    // Create a regular customer
-    cy.createTestCustomer({
-      email: customerEmail,
-      name: "Regular Customer",
-      isAdmin: false,
-    });
-
-    // Customer should be able to request login
-    cy.visit("/customer/login");
-    cy.get('input[type="email"]').type(customerEmail);
-    cy.get('button:contains("Request OTP")').click();
-
-    // Verify OTP flow is available
-    cy.contains(/OTP|verification code/i).should("be.visible");
-  });
-
-  it("should clear form when visiting login page fresh", () => {
-    cy.visit("/customer/login");
-    cy.get('input[type="email"]').type("test@example.com");
-    cy.reload();
-    cy.get('input[type="email"]').should("have.value", "");
+  it("redirects unauthenticated visitors away from the admin area (FR-3.1)", () => {
+    cy.visit("/admin");
+    cy.url().should("eq", Cypress.config("baseUrl") + "/");
   });
 });

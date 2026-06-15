@@ -91,6 +91,12 @@ export interface SaleItem {
   updatedAt: string;
 }
 
+export interface SaleFormInputs {
+  customerId: string;
+  markupPercent: string;
+  items: Array<{ productId: string; quantity: string; quantityOz?: string }>;
+}
+
 export interface Sale {
   id: number;
   customerId: number;

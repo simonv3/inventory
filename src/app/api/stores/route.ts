@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { decodeCustomerToken } from "@/lib/auth";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -10,10 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Decode token to get customer ID
-    const decodedToken = JSON.parse(
-      Buffer.from(token, "base64").toString("utf-8")
-    );
-    const customerId = decodedToken.customerId;
+    const customerId = decodeCustomerToken(token).customerId;
 
     // Get customer with their store associations
     const customer = await prisma.customer.findUnique({
@@ -90,13 +89,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(store, { status: 201 });
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      return NextResponse.json(
-        { error: "Store name already exists" },
-        { status: 400 }
-      );
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2002: { message: "Store name already exists", status: 400 },
+    });
+    if (handled) return handled;
     console.error("Error creating store:", error);
     return NextResponse.json(
       { error: "Failed to create store" },

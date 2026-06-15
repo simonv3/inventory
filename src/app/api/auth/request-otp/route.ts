@@ -67,6 +67,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Always log the OTP in development for convenience (no need to check email)
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`OTP for ${email}: ${otpCode}`);
+    }
+
     // Send OTP via nodemailer if SMTP is configured
     if (
       process.env.SMTP_HOST &&
@@ -94,13 +99,11 @@ export async function POST(request: NextRequest) {
           `,
           text: `Your login code is: ${otpCode}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, you can safely ignore this email.`,
         });
+        console.log(`OTP email sent to ${email} via SMTP`);
       } catch (emailError) {
         console.error("Error sending OTP email:", emailError);
         // Don't fail the request if email fails - OTP is still valid
       }
-    } else {
-      // Development fallback - log to console
-      console.log(`OTP for ${email}: ${otpCode}`);
     }
 
     return NextResponse.json(

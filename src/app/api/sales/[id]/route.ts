@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET single sale
@@ -55,12 +56,11 @@ export async function PUT(
 
     return NextResponse.json(sale);
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json({ error: "Sale not found" }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: "Failed to update sale" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Sale not found", status: 404 },
+      }) ??
+      NextResponse.json({ error: "Failed to update sale" }, { status: 500 })
     );
   }
 }
@@ -78,12 +78,11 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if ((error as any)?.code === "P2025") {
-      return NextResponse.json({ error: "Sale not found" }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: "Failed to delete sale" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2025: { message: "Sale not found", status: 404 },
+      }) ??
+      NextResponse.json({ error: "Failed to delete sale" }, { status: 500 })
     );
   }
 }

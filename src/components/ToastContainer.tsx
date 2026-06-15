@@ -16,25 +16,11 @@ function ToastNotification({
   type,
   onDismiss,
 }: ToastNotificationProps) {
-  const bgColor = {
-    success: "bg-green-50 border-green-200",
-    error: "bg-red-50 border-red-200",
-    warning: "bg-yellow-50 border-yellow-200",
-    info: "bg-blue-50 border-blue-200",
-  }[type];
-
-  const textColor = {
-    success: "text-green-900",
-    error: "text-red-900",
-    warning: "text-yellow-900",
-    info: "text-blue-900",
-  }[type];
-
-  const borderColor = {
-    success: "border-l-green-500",
-    error: "border-l-red-500",
-    warning: "border-l-yellow-500",
-    info: "border-l-blue-500",
+  const alertClass = {
+    success: "alert-success",
+    error: "alert-error",
+    warning: "alert-warning",
+    info: "alert-info",
   }[type];
 
   const icon = {
@@ -53,7 +39,7 @@ function ToastNotification({
     ),
     error: (
       <svg
-        className="w-5 h-5 text-red-500"
+        className="w-5 h-5 text-red-500 dark:text-red-400"
         fill="currentColor"
         viewBox="0 0 20 20"
       >
@@ -79,7 +65,7 @@ function ToastNotification({
     ),
     info: (
       <svg
-        className="w-5 h-5 text-blue-500"
+        className="w-5 h-5 text-blue-500 dark:text-blue-400"
         fill="currentColor"
         viewBox="0 0 20 20"
       >
@@ -94,17 +80,17 @@ function ToastNotification({
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-lg border-l-4 ${bgColor} ${borderColor} shadow-md animate-slide-in`}
+      className={`alert ${alertClass} shadow-md animate-slide-in`}
       role="alert"
       aria-live="polite"
     >
       <div className="flex-shrink-0">{icon}</div>
       <div className="flex-1">
-        <p className={`text-sm font-medium ${textColor}`}>{message}</p>
+        <p className="text-sm font-medium">{message}</p>
       </div>
       <button
         onClick={() => onDismiss(id)}
-        className={`flex-shrink-0 inline-flex ${textColor} hover:opacity-75 focus:outline-none`}
+        className="btn btn-ghost btn-xs btn-circle"
         aria-label="Dismiss notification"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

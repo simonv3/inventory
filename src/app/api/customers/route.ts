@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { getStoreIdFromRequest } from "@/lib/storeUtils";
+import { handlePrismaError } from "@/lib/prismaErrors";
 
 // GET all customers
 export async function GET(request: NextRequest) {
@@ -100,16 +101,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {
-    const err = error as any;
-    if (err?.code === "P2002") {
-      return NextResponse.json(
-        { error: "Email already exists" },
-        { status: 400 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Failed to create customer" },
-      { status: 500 },
+    return (
+      handlePrismaError(error, {
+        P2002: { message: "Email already exists", status: 400 },
+      }) ??
+      NextResponse.json(
+        { error: "Failed to create customer" },
+        { status: 500 },
+      )
     );
   }
 }

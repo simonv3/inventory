@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 // PUT update customer store relationship (e.g., storeManager flag)
@@ -29,13 +30,14 @@ export async function PUT(
     });
 
     return NextResponse.json(customerStore);
-  } catch (error: any) {
-    if (error?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Customer store association not found" },
-        { status: 404 }
-      );
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2025: {
+        message: "Customer store association not found",
+        status: 404,
+      },
+    });
+    if (handled) return handled;
     console.error("Error updating customer store:", error);
     return NextResponse.json(
       { error: "Failed to update customer store" },
@@ -60,13 +62,14 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error?.code === "P2025") {
-      return NextResponse.json(
-        { error: "Customer store association not found" },
-        { status: 404 }
-      );
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2025: {
+        message: "Customer store association not found",
+        status: 404,
+      },
+    });
+    if (handled) return handled;
     console.error("Error removing store from customer:", error);
     return NextResponse.json(
       { error: "Failed to remove store from customer" },

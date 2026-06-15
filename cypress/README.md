@@ -6,6 +6,11 @@ This project uses Cypress for end-to-end testing with a fresh database for each 
 
 Cypress is already installed. No additional setup needed.
 
+> **Port:** `cypress.config.ts` points at `http://localhost:3001`, but `npm run dev`
+> serves port 3000. Start the dev server on the matching port before running tests:
+> `npx next dev -p 3001`. It must run in development mode so the `/api/test/*`
+> endpoints are enabled (they return 403 otherwise).
+
 ## Running Tests
 
 ### Open Cypress Test Runner (Interactive)
@@ -61,12 +66,18 @@ cy.createTestCustomer({
 // Store creation
 cy.createTestStore("Test Store");
 
-// Authentication flows
-cy.login(email, password);
+// Authentication — forge the session cookie and skip OTP (use this for gated pages)
+cy.loginAs({ email: "admin@example.com", isAdmin: true });
+
+// Real OTP UI flow — only when testing login itself
 cy.requestOtp(email);
 cy.verifyOtp(otp);
 cy.logout();
 ```
+
+The `customerToken` cookie is unsigned base64 JSON and middleware only checks for its
+presence, so `cy.loginAs` authenticates without the OTP round-trip. Prefer it for
+anything behind `/admin`, `/customer/portal`, or `/order`.
 
 ## Writing Tests
 
@@ -88,9 +99,10 @@ describe("Feature Name", () => {
     // Perform actions
     cy.visit("/customer/login");
     cy.get('input[type="email"]').type("test@example.com");
+    cy.get('button:contains("Send Code")').click();
 
     // Assert results
-    cy.url().should("include", "/customer/portal");
+    cy.contains(/OTP sent|check your email/i).should("be.visible");
   });
 });
 ```
@@ -128,9 +140,11 @@ Look at the browser console in the Cypress runner for JavaScript errors or netwo
 To run tests in CI/CD pipeline:
 
 ```bash
-# Start the Next.js server in background
-npm run dev &
-sleep 5  # Wait for server to start
+# Start the Next.js server in background on the port Cypress expects
+npx next dev -p 3001 &
+
+# Wait for the server to be ready
+until curl -sf http://localhost:3001 >/dev/null; do sleep 1; done
 
 # Run tests
 npm run test:e2e

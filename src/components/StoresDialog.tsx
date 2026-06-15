@@ -119,17 +119,17 @@ export function StoresDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
-        <div className="border-b border-gray-200 px-6 py-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
+      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] flex flex-col">
+        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 shrink-0">
           <h2 className="text-lg font-semibold">
             Manage Stores for {customer.name}
           </h2>
         </div>
 
-        <div className="px-6 py-4 max-h-96 overflow-y-auto">
+        <div className="px-6 py-4 overflow-y-auto">
           {allStores.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
               No stores available
             </p>
           ) : (
@@ -143,18 +143,18 @@ export function StoresDialog({
                     disabled={loading}
                     className="w-4 h-4 cursor-pointer"
                   />
-                  <span className="text-gray-700">{store.name}</span>
+                  <span className="text-gray-700 dark:text-gray-200">{store.name}</span>
                 </label>
               ))}
             </div>
           )}
         </div>
 
-        <div className="border-t border-gray-200 px-6 py-4 flex gap-2 justify-end">
+        <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex gap-2 justify-end shrink-0">
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50"
+            className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
           >
             Cancel
           </button>

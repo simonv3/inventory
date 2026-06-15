@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 
 // GET all sources
 export async function GET() {
@@ -38,18 +39,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(source, { status: 201 });
   } catch (error) {
     console.error("Error creating source:", error);
-    const errorCode = (error as any)?.code;
-
-    if (errorCode === "P2002") {
-      return NextResponse.json(
-        { error: "Source with this name already exists" },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create source" },
-      { status: 500 }
+    return (
+      handlePrismaError(error, {
+        P2002: { message: "Source with this name already exists", status: 409 },
+      }) ??
+      NextResponse.json({ error: "Failed to create source" }, { status: 500 })
     );
   }
 }

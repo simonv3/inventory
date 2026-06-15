@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { handlePrismaError } from "@/lib/prismaErrors";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -51,16 +52,12 @@ export async function PUT(
     });
 
     return NextResponse.json(store);
-  } catch (error: any) {
-    if (error?.code === "P2025") {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
-    if (error?.code === "P2002") {
-      return NextResponse.json(
-        { error: "Store name already exists" },
-        { status: 400 }
-      );
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2025: { message: "Store not found", status: 404 },
+      P2002: { message: "Store name already exists", status: 400 },
+    });
+    if (handled) return handled;
     console.error("Error updating store:", error);
     return NextResponse.json(
       { error: "Failed to update store" },
@@ -97,10 +94,11 @@ export async function DELETE(
     });
 
     return NextResponse.json(store);
-  } catch (error: any) {
-    if (error?.code === "P2025") {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
+  } catch (error) {
+    const handled = handlePrismaError(error, {
+      P2025: { message: "Store not found", status: 404 },
+    });
+    if (handled) return handled;
     console.error("Error deleting store:", error);
     return NextResponse.json(
       { error: "Failed to delete store" },
